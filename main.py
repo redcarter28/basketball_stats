@@ -1,9 +1,21 @@
 import pandas
+ 
+file_path = 'data/t_haliburton.csv'
 
-file_path = 'data/sportsref_download.xlsx'
+stats = pandas.read_csv(file_path, parse_dates=['Date'])
 
-stats = pandas.read_excel(file_path, parse_dates=['Date'])
-#stats['MP'] = stats['MP'].apply(lambda x: int(x.split(':')[0]) * 60 + int(x.split(':')[1]))
 stats.fillna(0, inplace=True)
 
+avg_pts = stats['PTS'].mean()
+
+stats['above_average'] = stats['PTS'] > avg_pts
+stats['rebounds_assists_ratio'] = stats['TRB'] / stats['AST']
+stats['pts_reb+ast_ratio'] = stats['PTS'] / (stats['TRB'] + stats['AST'])
+stats.replace([float('inf'), -float('inf')], 0, inplace=True)
+
 print(stats)
+print(avg_pts)
+
+
+
+
