@@ -6,11 +6,11 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
  
 pandas.options.display.float_format = '{:,.2f}'.format
 
-file_path_t_haliburton_regszn = 'data/t_haliburton_23-24_regszn.csv'
+file_path_t_haliburton = 'data/t_haliburton_lines_05-21-24.csv'
 file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
-set1 = pandas.read_csv(file_path_t_haliburton_regszn, parse_dates=['Date'], dtype={'G': str})
-set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
+set1 = pandas.read_csv(file_path_t_haliburton, parse_dates=['Date'], dtype={'G': str})
+#set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
 
 def convert_mp_to_minutes(mp_str):
     try:
@@ -32,11 +32,11 @@ def convert_mp_to_minutes(mp_str):
     
 def preprocess(file_path):
     
-    df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
+    df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'Minutes': str})
 
-    df = df.dropna(subset=['G', 'MP'])
+    df = df.dropna(subset=['Minutes'])
 
-    df['MP'] = df['MP'].apply(convert_mp_to_minutes)
+    df['Minutes'] = df['Minutes'].apply(convert_mp_to_minutes)
 
     df.fillna(0, inplace=True)
 
@@ -49,8 +49,6 @@ def preprocess(file_path):
 
     return df
 
-set1 = preprocess(file_path_t_haliburton_regszn)
-set2 = preprocess(file_path_t_haliburton_playoffs)
 target_data = set2.tail(1)
 set2.drop(set2.tail(1).index,inplace=True)
 
