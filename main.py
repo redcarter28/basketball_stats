@@ -37,14 +37,20 @@ def preprocess(file_path):
     
     df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
 
+    df[['Result', 'Point_Diff']] = df['W/L'].str.extract(r'([WL])\s*\(([-+]?\d+)\)?')
+
     df = df.dropna(subset=['MP'])
 
     df = df.drop(columns=['Rk', 'G', 'Age', 'Tm', 'W/L'])
+
+    # Convert 'Point_Diff' to numeric (if applicable)
+    df['Point_Diff'] = pandas.to_numeric(df['Point_Diff'], errors='coerce')
 
     df = pandas.get_dummies(df, columns=['LOC'])
 
     label_encoder = LabelEncoder()
     df['Opp_encoded'] = label_encoder.fit_transform(df['Opp'])
+    df['Result_enc'] = label_encoder.fit_transform(df['Result'])
 
     df['MP'] = df['MP'].apply(convert_mp_to_minutes)
 
@@ -102,7 +108,7 @@ plt.title('Points vs. Assists')
 plt.show()
 
 # model
-X = set1[['LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
+X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
 #X = set1.drop(columns=['Line'])
 y = set1['above_line'].astype(int)
 
@@ -139,12 +145,15 @@ new_data = pandas.DataFrame({
     'BLK': [set1.iloc[:6]['BLK'].mean()],
     'TOV': [set1.iloc[:6]['TOV'].mean()],
     'rebounds_assists_ratio': [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()],
-    'pts_reb+ast_ratio': [1.46],
+    'pts_reb+ast_ratio': [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() - set1.iloc[:6]['AST'].mean())],
     '3pa_fga_ratio': [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())],
     'PTS': [set1.iloc[:6]['PTS'].mean()],
-    'Line': [19.5],
-    'Opp' : ['BOS'],
-    'LOC_@': ['True']
+    'Line': [18.5],
+    'Opp_encoded' : [1],
+    'LOC_@': [1],
+    'Result_enc': [0],
+    'Point_Diff': [-9]
+
 })
 
 #new_data = set1.iloc[:6]
