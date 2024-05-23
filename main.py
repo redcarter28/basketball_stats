@@ -4,7 +4,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestRegressor
-import numpy as np
+from sklearn.preprocessing import LabelEncoder
+#import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
@@ -40,6 +41,11 @@ def preprocess(file_path):
 
     df = df.drop(columns=['Rk', 'G', 'Age', 'Tm', 'W/L'])
 
+    df = pandas.get_dummies(df, columns=['LOC'])
+
+    label_encoder = LabelEncoder()
+    df['Opp_encoded'] = label_encoder.fit_transform(df['Opp'])
+
     df['MP'] = df['MP'].apply(convert_mp_to_minutes)
 
     if 'Date' in df.columns:
@@ -52,7 +58,7 @@ def preprocess(file_path):
     df['above_line'] = df['PTS'] > df['Line']
     df['rebounds_assists_ratio'] = df['TRB'] / df['AST']
     df['pts_reb+ast_ratio'] = df['PTS'] / (df['TRB'] + df['AST'])
-    df['fga_3pa_ratio'] = df['FGA'] / df ['3PA']
+    df['3pa_fga_ratio'] = df ['3PA'] / (df['FGA'] - -df['3PA'])
     df.replace([float('inf'), -float('inf')], 0, inplace=True)
 
     return df
@@ -96,7 +102,7 @@ plt.title('Points vs. Assists')
 plt.show()
 
 # model
-X = set1[['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', 'fga_3pa_ratio', 'PTS']]
+X = set1[['LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
 #X = set1.drop(columns=['Line'])
 y = set1['above_line'].astype(int)
 
@@ -134,11 +140,11 @@ new_data = pandas.DataFrame({
     'TOV': [set1.iloc[:6]['TOV'].mean()],
     'rebounds_assists_ratio': [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()],
     'pts_reb+ast_ratio': [1.46],
-    'fga_3pa_ratio': [set1.iloc[:6]['FGA'].mean() / set1.iloc[:6]['3PA'].mean()],
+    '3pa_fga_ratio': [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())],
     'PTS': [set1.iloc[:6]['PTS'].mean()],
     'Line': [19.5],
     'Opp' : ['BOS'],
-    'LOC': ['@']
+    'LOC_@': ['True']
 })
 
 #new_data = set1.iloc[:6]
