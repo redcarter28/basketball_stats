@@ -166,7 +166,7 @@ new_data = pandas.DataFrame({
     'BLK': [set1.iloc[:6]['BLK'].mean()],
     'TOV': [set1.iloc[:6]['TOV'].mean()],
     'rebounds_assists_ratio': [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()],
-    'pts_reb+ast_ratio': [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() - set1.iloc[:6]['AST'].mean())],
+    'pts_reb+ast_ratio': [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())],
     '3pa_fga_ratio': [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())],
     'PTS': [set1.iloc[:6]['PTS'].mean()],
     'Line': [18.5],
@@ -180,11 +180,12 @@ new_data = pandas.DataFrame({
 #INTERACTIVE QUERIES
 #MAIN LOOP FOR MODEL ANALYSIS
 while(True):
-    data = input(Fore.WHITE + 'Choose from the following options:\n1 - Accuracy/Classification Report\n2 - Enter custom query to predict a future match\n3 - Quit\n')
+    data = input(Fore.WHITE + 'Choose from the following options:\n1 - Accuracy/Classification Report for backtested data\n2 - Enter custom query to predict a future match\n3 - Quit\n')
     os.system('cls')
     match data:
         case '1':
             # evaluate
+            print('This report was generated with a test_size of 0.2, meaning %20 of the data was reserved for test cases and the rest is used for training.\n')
             accuracy = accuracy_score(y_test, y_pred)
             print(f'Accuracy: {accuracy:.2f}')
 
@@ -196,20 +197,54 @@ while(True):
             data = input('\nPress any key to exit!')
             os.system('cls')
         case '2':
-            print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6 matches average. \nSee documentation for official list of codes and explanations.')
-            print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Lose], [Spread]')
-            print('\n')
-            print('Enter your stats:')
+            while(True):
+                print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee documentation for official list of codes and explanations.')
+                print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Loss], [Spread]')
+                print('EXAMPLE: 30, 0.52, 0.37, 0.76, 5, 7, 1, 0, 3, 18.5, 1, 0, 0, +7.5')
+                print('\n')
+                print('Enter your stats:')
+                data = input().split(',')
+
+                for i in range(0, len(data)):
+                    tmp = data[i].strip()
+                    data[i] = tmp
+
+                try:
+                    new_data = pandas.DataFrame()
+                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Opp_encoded', 'LOC_@', 'Result_enc', 'Point_Diff']
+                    for i in range(0, len(data)):
+                        if(data[i] == 'avg'):
+                            new_data[field_list[i]] = set1.iloc[:6][field_list[i]].mean()
+                        else:
+                            new_data[field_list[i]] = [data[i].strip('+')]
+                    
+                    new_data['rebounds_assists_ratio'] = [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()]
+                    new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
+                    new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
 
 
-            data = input().split(',')
-            for i in range(0, len(data)):
-                tmp = data[i].strip()
-                data[i] = tmp
-            print(data)
-        case '3':
+                    # Convert 'Point_Diff' to numeric (if applicable)
+                    new_data['Point_Diff'] = pandas.to_numeric(new_data['Point_Diff'], errors='coerce')
+
+        
+
+                    os.system('cls')
+                    print(f'YOUR DATA: \n{new_data}')
+                    next_game_prediction = model.predict(new_data[X.columns])
+
+                    #print(np.mean(y_pred == y_test))
+
+                    print(f'NEXT GAME: \nPrediction: {"Above Line" if next_game_prediction[0] else "Below Line"}')
+                    break
+
+                except Exception as e:
+                    print(f'Error during data input: {e}\nYour data was likely input incorrectly; Please follow the format.\nPress any key to retry.')
+                    data = input()
+
+                
             break
-    
+                
+
 print(Fore.WHITE)
 quit()
 #new_data = set1.iloc[:6]
