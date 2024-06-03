@@ -16,7 +16,7 @@ file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
 #set1 = pandas.read_csv(file_path_t_haliburton_regszn, parse_dates=['Date'], dtype={'G': str})
 #set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
-
+os.system('cls')
 def convert_mp_to_minutes(mp_str):
     try:
         if isinstance(mp_str, pandas.Timestamp):
@@ -80,9 +80,10 @@ while True:
 try:
     set1 = preprocess(file_path_t_haliburton_regszn)
 except Exception as e:
-    print(f'Error during preprocessing: {e}')
-print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
-print('Choose from the following numbered options\n')
+    print(Fore.RED + f'Error during preprocessing: {e}')
+
+os.system('cls')
+
 #set1 = preprocess(file_path_t_haliburton_playoffs)
 
 #target = set1.iloc[:1]
@@ -90,6 +91,8 @@ print('Choose from the following numbered options\n')
 
 #MAIN LOOP FOR APPLICATION
 while(True):
+    print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
+    print('Choose from the following numbered options\n')
     data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Train and run the ML algorithm!\n6 - Exit\n")
     match data:
         case '1':
@@ -128,36 +131,30 @@ while(True):
 
 
 avg_pts = set1['PTS'].mean()
-print(set1)
-print(avg_pts)
 
-# model
-X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
-#X = set1.drop(columns=['Line'])
-y = set1['above_line'].astype(int)
+try:
+    # model creation
+    X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
+    #X = set1.drop(columns=['Line'])
+    y = set1['above_line'].astype(int)
 
+    os.system('cls')
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-#X_train = X.iloc[:75]
-#y_train = y.iloc[:75]
-#X_test = X.iloc[75:83]
-#y_test = y.iloc[75:83]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    #X_train = X.iloc[:75]
+    #y_train = y.iloc[:75]
+    #X_test = X.iloc[75:83]
+    #y_test = y.iloc[75:83]
 
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train, y_train)
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X_train, y_train)
 
-y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test)
+except Exception as e:
+    print(Fore.RED + f"Error during model training: {e}")
+print(Fore.LIGHTGREEN_EX + 'Data trained!')
 
-# evaluate
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Accuracy: {accuracy:.2f}')
-
-print('Classification Report:')
-print(classification_report(y_test, y_pred))
-
-print('Confusion Matrix:')
-print(confusion_matrix(y_test, y_pred))
-
+#test data
 new_data = pandas.DataFrame({
     'MP': [set1.iloc[:6]['MP'].mean()],
     'FG%': [set1.iloc[:6]['FG%'].mean()],
@@ -180,6 +177,41 @@ new_data = pandas.DataFrame({
 
 })
 
+#INTERACTIVE QUERIES
+#MAIN LOOP FOR MODEL ANALYSIS
+while(True):
+    data = input(Fore.WHITE + 'Choose from the following options:\n1 - Accuracy/Classification Report\n2 - Enter custom query to predict a future match\n3 - Quit\n')
+    os.system('cls')
+    match data:
+        case '1':
+            # evaluate
+            accuracy = accuracy_score(y_test, y_pred)
+            print(f'Accuracy: {accuracy:.2f}')
+
+            print('Classification Report:')
+            print(classification_report(y_test, y_pred))
+
+            print('Confusion Matrix:')
+            print(confusion_matrix(y_test, y_pred))
+            data = input('\nPress any key to exit!')
+            os.system('cls')
+        case '2':
+            print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6 matches average. \nSee documentation for official list of codes and explanations.')
+            print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Lose], [Spread]')
+            print('\n')
+            print('Enter your stats:')
+
+
+            data = input().split(',')
+            for i in range(0, len(data)):
+                tmp = data[i].strip()
+                data[i] = tmp
+            print(data)
+        case '3':
+            break
+    
+print(Fore.WHITE)
+quit()
 #new_data = set1.iloc[:6]
 
 #first_row = set2.head(1).copy()
@@ -195,11 +227,3 @@ print(new_data)
 #print(y_pred)
 #print(y_test)
 quit()
-X2 = set1.drop('Line', axis=1)
-Y2 = set1['Line']
-
-X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.2, random_state=42)
-model2 = RandomForestRegressor(n_estimators=100).fit(X2_train, Y2_train)
-
-Y2_pred = model2.predict(X2_test)
-print(accuracy_score(Y2_test, Y2_pred))
