@@ -5,6 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
+from colorama import Fore
+import os
 #import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
@@ -69,43 +71,65 @@ def preprocess(file_path):
 
     return df
 
-set1 = preprocess(file_path_t_haliburton_regszn)
+print(Fore.YELLOW + 'Welcome to the ML Basketball Tool!\nPress enter to get started!')
+while True:
+    user_input = input()
+    if(user_input == ''):
+        break
+
+try:
+    set1 = preprocess(file_path_t_haliburton_regszn)
+except Exception as e:
+    print(f'Error during preprocessing: {e}')
+print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
+print('Choose from the following numbered options\n')
 #set1 = preprocess(file_path_t_haliburton_playoffs)
 
-target = set1.iloc[:1]
+#target = set1.iloc[:1]
 #set1 = set1.iloc[1:]
+
+#MAIN LOOP FOR APPLICATION
+while(True):
+    data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Train and run the ML algorithm!\n6 - Exit\n")
+    match data:
+        case '1':
+            # Histogram of points scored
+            plt.hist(set1['PTS'], bins=20, edgecolor='black')
+            plt.xlabel('Points Scored')
+            plt.ylabel('Frequency')
+            plt.title('Distribution of Points Scored')
+            plt.show()
+        case '2':
+            # Scatter plot of points vs. minutes played
+            plt.scatter(set1['MP'], set1['PTS'])
+            plt.xlabel('Minutes Played')
+            plt.ylabel('Points Scored')
+            plt.title('Points vs. Minutes Played')
+            plt.show()
+        case '3':
+            # Scatter plot of points vs. rebounds_assists_ratio
+            plt.scatter(set1['rebounds_assists_ratio'], set1['PTS'])
+            plt.xlabel('Rebounds to Assists Ratio')
+            plt.ylabel('Points Scored')
+            plt.title('Points vs. Rebounds to Assists Ratio')
+            plt.show()
+        case '4':
+            # Scattor plot of points vs. assists
+            plt.scatter(set1['AST'], set1['PTS'])
+            plt.xlabel('Assists Recorded')
+            plt.ylabel('Points Scored')
+            plt.title('Points vs. Assists')
+            plt.show()
+        case '5':
+            break
+        case '6':
+            quit()
+    os.system('cls')
+
 
 avg_pts = set1['PTS'].mean()
 print(set1)
 print(avg_pts)
-
-# Histogram of points scored
-plt.hist(set1['PTS'], bins=20, edgecolor='black')
-plt.xlabel('Points Scored')
-plt.ylabel('Frequency')
-plt.title('Distribution of Points Scored')
-plt.show()
-
-# Scatter plot of points vs. minutes played
-plt.scatter(set1['MP'], set1['PTS'])
-plt.xlabel('Minutes Played')
-plt.ylabel('Points Scored')
-plt.title('Points vs. Minutes Played')
-plt.show()
-
-# Scatter plot of points vs. rebounds_assists_ratio
-plt.scatter(set1['rebounds_assists_ratio'], set1['PTS'])
-plt.xlabel('Rebounds to Assists Ratio')
-plt.ylabel('Points Scored')
-plt.title('Points vs. Rebounds to Assists Ratio')
-plt.show()
-
-# Scattor plot of points vs. assists
-plt.scatter(set1['AST'], set1['PTS'])
-plt.xlabel('Assists Recorded')
-plt.ylabel('Points Scored')
-plt.title('Points vs. Assists')
-plt.show()
 
 # model
 X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
