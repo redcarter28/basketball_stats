@@ -277,8 +277,11 @@ while(True):
                 print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Loss], [Spread]')
                 print('EXAMPLE: 30, 0.52, 0.37, 0.76, 5, 7, 1, 0, 3, 18.5, 1, 0, 0, +7.5')
                 print('\n')
-                print('Enter your stats:')
+                print('Enter your stats (or \'x\' to return to previous menu):')
                 data = input().split(',')
+                if data[0] == 'x':
+                    os.system('cls')
+                    break
 
                 for i in range(0, len(data)):
                     tmp = data[i].strip()
@@ -310,14 +313,16 @@ while(True):
                     #print(np.mean(y_pred == y_test))
 
                     print(Fore.WHITE + f'NEXT GAME: \nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}')
-                    break
+                    input(Fore.WHITE + '\nPress any key to continue.')
+                    os.system('cls')
 
                 except Exception as e:
                     print(f'Error during data input: {e}\nYour data was likely input incorrectly; Please follow the format.\nPress any key to retry.')
                     data = input()
+                    os.system('cls')
 
                 
-            break
+            
         case '5':
             settings_menu()
         case '6':
