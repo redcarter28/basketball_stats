@@ -14,6 +14,14 @@ pandas.options.display.float_format = '{:,.2f}'.format
 file_path_t_haliburton_regszn = 'data/t_haliburton_23-24_regszn.csv'
 file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
+settings = {
+    #default values
+    'dataset_path': 'data/t_haliburton_23-24_regszn.csv',
+    'test_size': 0.2,
+    'random_state': 42
+}
+
+
 #set1 = pandas.read_csv(file_path_t_haliburton_regszn, parse_dates=['Date'], dtype={'G': str})
 #set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
 os.system('cls')
@@ -76,8 +84,50 @@ def preprocess(file_path):
 
 def display_label_encodings(label_encoder):
     for feature, encoder in label_encoder.items():
-        mappings = {index: label for index, label in enumerate(encoder.classes_)}
-        print(f"Label encodings for {feature}: {mappings}\n")
+        print(f"Label encodings for {feature}:")
+        for index, label in enumerate(encoder.classes_):
+            print(f"  {index}: {label}")
+        print()
+        
+def print_settings():
+    print("\nCurrent Settings:")
+    for key, value in settings.items():
+        print(f"{key}: {value}")
+    print()
+
+def change_setting():
+    os.system('cls')
+    print_settings()
+    setting_key = input("Enter the setting you want to change (or 'exit' to return): ")
+    if setting_key.lower() == 'exit':
+        return
+    if setting_key in settings:
+        new_value = input(f"Enter new value for {setting_key} (current: {settings[setting_key]}): ")
+        # Additional validation based on setting type can be added here
+        if setting_key in ['test_size', 'random_state']:
+            new_value = float(new_value) if setting_key == 'test_size' else int(new_value)
+        settings[setting_key] = new_value
+        print(f"{setting_key} updated to {new_value}.")
+    else:
+        print("Invalid setting key.")
+
+def settings_menu():
+    while True:
+        os.system('cls')
+        print("Settings Menu")
+        print_settings()
+        print("2. Change Setting")
+        print("3. Return to Main Menu")
+        choice = input("Enter choice: ")
+        if choice == '1':
+            print_settings()
+        elif choice == '2':
+            change_setting()
+        elif choice == '3':
+            os.system('cls')
+            break
+        else:
+            print("Invalid choice, please try again.")
 
 print(Fore.YELLOW + 'Welcome to the ML Basketball Tool!\nPress enter to get started!')
 while True:
@@ -92,80 +142,83 @@ try:
 except Exception as e:
     print(Fore.RED + f'Error during preprocessing: {e}')
 
-os.system('cls')
 
+os.system('cls')
+print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
 #set1 = preprocess(file_path_t_haliburton_playoffs)
 
 #target = set1.iloc[:1]
 #set1 = set1.iloc[1:]
 
-#MAIN LOOP FOR APPLICATION
-while(True):
-    print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
-    print('Choose from the following numbered options\n')
-    data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Train and run the ML algorithm!\n6 - Show encoded mappings\n7 - Exit\n")
-    match data:
-        case '1':
-            # Histogram of points scored
-            plt.hist(set1['PTS'], bins=20, edgecolor='black')
-            plt.xlabel('Points Scored')
-            plt.ylabel('Frequency')
-            plt.title('Distribution of Points Scored')
-            plt.show()
-        case '2':
-            # Scatter plot of points vs. minutes played
-            plt.scatter(set1['MP'], set1['PTS'])
-            plt.xlabel('Minutes Played')
-            plt.ylabel('Points Scored')
-            plt.title('Points vs. Minutes Played')
-            plt.show()
-        case '3':
-            # Scatter plot of points vs. rebounds_assists_ratio
-            plt.scatter(set1['rebounds_assists_ratio'], set1['PTS'])
-            plt.xlabel('Rebounds to Assists Ratio')
-            plt.ylabel('Points Scored')
-            plt.title('Points vs. Rebounds to Assists Ratio')
-            plt.show()
-        case '4':
-            # Scattor plot of points vs. assists
-            plt.scatter(set1['AST'], set1['PTS'])
-            plt.xlabel('Assists Recorded')
-            plt.ylabel('Points Scored')
-            plt.title('Points vs. Assists')
-            plt.show()
-        case '5':
-            break
-        case '6':
-            print('Displaying encoded mappings:\n')
-            display_label_encodings(mappings)
-        case '7':
-            quit()
-    os.system('cls')
+#MAIN LOOP FOR DIAGRAMS
+def diagram_service():
+    while(True):
+       
+        print(Fore.LIGHTGREEN_EX + 'VISUALIZATIONS DASHBOARD:\nChoose from the following numbered options\n')
+        data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Back to previous screen\n")
+        match data:
+            case '1':
+                # Histogram of points scored
+                plt.hist(set1['PTS'], bins=20, edgecolor='black')
+                plt.xlabel('Points Scored')
+                plt.ylabel('Frequency')
+                plt.title('Distribution of Points Scored')
+                plt.show()
+            case '2':
+                # Scatter plot of points vs. minutes played
+                plt.scatter(set1['MP'], set1['PTS'])
+                plt.xlabel('Minutes Played')
+                plt.ylabel('Points Scored')
+                plt.title('Points vs. Minutes Played')
+                plt.show()
+            case '3':
+                # Scatter plot of points vs. rebounds_assists_ratio
+                plt.scatter(set1['rebounds_assists_ratio'], set1['PTS'])
+                plt.xlabel('Rebounds to Assists Ratio')
+                plt.ylabel('Points Scored')
+                plt.title('Points vs. Rebounds to Assists Ratio')
+                plt.show()
+            case '4':
+                # Scattor plot of points vs. assists
+                plt.scatter(set1['AST'], set1['PTS'])
+                plt.xlabel('Assists Recorded')
+                plt.ylabel('Points Scored')
+                plt.title('Points vs. Assists')
+                plt.show()
+            case '5':
+                os.system('cls')
+                break
+        os.system('cls')
 
 
 avg_pts = set1['PTS'].mean()
 
-try:
-    # model creation
-    X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
-    #X = set1.drop(columns=['Line'])
-    y = set1['above_line'].astype(int)
+def train_model():
+    try:
+        # model creation
+        X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
+        #X = set1.drop(columns=['Line'])
+        y = set1['above_line'].astype(int)
 
-    os.system('cls')
+        os.system('cls')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    #X_train = X.iloc[:75]
-    #y_train = y.iloc[:75]
-    #X_test = X.iloc[75:83]
-    #y_test = y.iloc[75:83]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=settings['test_size'], random_state=settings['random_state'])
+        #X_train = X.iloc[:75]
+        #y_train = y.iloc[:75]
+        #X_test = X.iloc[75:83]
+        #y_test = y.iloc[75:83]
 
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train, y_train)
+        model = LogisticRegression(max_iter=1000)
+        model.fit(X_train, y_train)
 
-    y_pred = model.predict(X_test)
-except Exception as e:
-    print(Fore.RED + f"Error during model training: {e}")
-print(Fore.LIGHTGREEN_EX + 'Data trained!')
+        y_pred = model.predict(X_test)
+
+        return model, X_train, X_test, y_train, y_test, y_pred, X, y
+    except Exception as e:
+        print(Fore.RED + f"Error during model training: {e}")
+    print(Fore.LIGHTGREEN_EX + 'Data trained!')
+
+model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
 #test data
 new_data = pandas.DataFrame({
@@ -193,14 +246,18 @@ new_data = pandas.DataFrame({
 #INTERACTIVE QUERIES
 #MAIN LOOP FOR MODEL ANALYSIS
 while(True):
-    data = input(Fore.WHITE + 'Choose from the following options:\n1 - Accuracy/Classification Report for backtested data\n2 - Enter custom query to predict a future match\n3 - Quit\n')
+    print(Fore.GREEN + 'Choose from the following options:\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Quit\n')
     os.system('cls')
     match data:
         case '1':
+            diagram_service()
+        case '2':
             # evaluate
-            print('This report was generated with a test_size of 0.2, meaning %20 of the data was reserved for test cases and the rest is used for training.\n')
+            os.system('cls')
+            print(Fore.YELLOW + f'This report was generated with a test_size of {settings["test_size"]}, meaning %{str(settings["test_size"]).split('.')[1] + '0'} of the data was reserved for test cases and the rest is used for training.\n')
             accuracy = accuracy_score(y_test, y_pred)
-            print(f'Accuracy: {accuracy:.2f}')
+            print(Fore.WHITE + f'Accuracy: {accuracy:.2f}')
 
             print('Classification Report:')
             print(classification_report(y_test, y_pred))
@@ -209,7 +266,12 @@ while(True):
             print(confusion_matrix(y_test, y_pred))
             data = input('\nPress any key to exit!')
             os.system('cls')
-        case '2':
+        case '3':
+            os.system('cls')
+            model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model()
+            print(Fore.YELLOW + 'Model re-trained')
+            print(Fore.WHITE)
+        case '4': #custom query menu
             while(True):
                 print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee documentation for official list of codes and explanations.')
                 print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Loss], [Spread]')
@@ -247,7 +309,7 @@ while(True):
 
                     #print(np.mean(y_pred == y_test))
 
-                    print(f'NEXT GAME: \nPrediction: {"Above Line" if next_game_prediction[0] else "Below Line"}')
+                    print(Fore.WHITE + f'NEXT GAME: \nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}')
                     break
 
                 except Exception as e:
@@ -256,7 +318,11 @@ while(True):
 
                 
             break
-                
+        case '5':
+            settings_menu()
+        case '6':
+            quit()
+
 
 print(Fore.WHITE)
 quit()
