@@ -50,9 +50,12 @@ def preprocess(file_path):
 
     df = pandas.get_dummies(df, columns=['LOC'])
 
-    label_encoder = LabelEncoder()
-    df['Opp_encoded'] = label_encoder.fit_transform(df['Opp'])
-    df['Result_enc'] = label_encoder.fit_transform(df['Result'])
+    label_encoders = {}
+    label_encoders['Opp'] = LabelEncoder()
+    label_encoders['Result'] = LabelEncoder()
+
+    df['Opp_encoded'] = label_encoders['Opp'].fit_transform(df['Opp'])
+    df['Result_enc'] = label_encoders['Result'].fit_transform(df['Result'])
 
     df['MP'] = df['MP'].apply(convert_mp_to_minutes)
 
@@ -69,7 +72,12 @@ def preprocess(file_path):
     df['3pa_fga_ratio'] = df ['3PA'] / (df['FGA'] - -df['3PA'])
     df.replace([float('inf'), -float('inf')], 0, inplace=True)
 
-    return df
+    return df, label_encoders
+
+def display_label_encodings(label_encoder):
+    for feature, encoder in label_encoder.items():
+        mappings = {index: label for index, label in enumerate(encoder.classes_)}
+        print(f"Label encodings for {feature}: {mappings}\n")
 
 print(Fore.YELLOW + 'Welcome to the ML Basketball Tool!\nPress enter to get started!')
 while True:
@@ -77,8 +85,10 @@ while True:
     if(user_input == ''):
         break
 
+
 try:
-    set1 = preprocess(file_path_t_haliburton_regszn)
+    set1, mappings = preprocess(file_path_t_haliburton_regszn)
+    
 except Exception as e:
     print(Fore.RED + f'Error during preprocessing: {e}')
 
@@ -93,7 +103,7 @@ os.system('cls')
 while(True):
     print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
     print('Choose from the following numbered options\n')
-    data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Train and run the ML algorithm!\n6 - Exit\n")
+    data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Train and run the ML algorithm!\n6 - Show encoded mappings\n7 - Exit\n")
     match data:
         case '1':
             # Histogram of points scored
@@ -126,6 +136,9 @@ while(True):
         case '5':
             break
         case '6':
+            print('Displaying encoded mappings:\n')
+            display_label_encodings(mappings)
+        case '7':
             quit()
     os.system('cls')
 
