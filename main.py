@@ -6,7 +6,10 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
 from colorama import Fore
+import re
 import os
+import logging
+from datetime import datetime
 #import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
@@ -37,7 +40,7 @@ def convert_mp_to_minutes(mp_str):
         minutes = int(time_parts[0])
         seconds = int(time_parts[1])
         # Calculate total minutes
-        total_minutes = minutes + seconds/60
+        total_minutes = float(minutes + seconds/60)
         return total_minutes
     except Exception as e:
         print(f"Error converting {mp_str}: {e}")
@@ -56,12 +59,14 @@ def preprocess(file_path):
     # Convert 'Point_Diff' to numeric (if applicable)
     df['Point_Diff'] = pandas.to_numeric(df['Point_Diff'], errors='coerce')
 
-    df = pandas.get_dummies(df, columns=['LOC'])
 
     label_encoders = {}
     label_encoders['Opp'] = LabelEncoder()
     label_encoders['Result'] = LabelEncoder()
-
+    label_encoders['LOC'] = LabelEncoder()
+    
+    
+    df['LOC_encoded'] = label_encoders['LOC'].fit_transform(df['LOC'])
     df['Opp_encoded'] = label_encoders['Opp'].fit_transform(df['Opp'])
     df['Result_enc'] = label_encoders['Result'].fit_transform(df['Result'])
 
@@ -73,21 +78,28 @@ def preprocess(file_path):
     df.fillna(0, inplace=True)
 
     avg_pts = df['PTS'].mean()
+    df['MP'] = pandas.to_numeric(df['MP'], errors='coerce')
+    df['FG%'] = pandas.to_numeric(df['FG%'], errors='coerce')
+    df['3P%'] = pandas.to_numeric(df['3P%'], errors='coerce')
 
     df['above_line'] = df['PTS'] > df['Line']
     df['rebounds_assists_ratio'] = df['TRB'] / df['AST']
-    df['pts_reb+ast_ratio'] = df['PTS'] / (df['TRB'] + df['AST'])
+    df['pts_reb+ast_ratio'] = float(df['PTS'] / (df['TRB'] + df['AST']))
     df['3pa_fga_ratio'] = df ['3PA'] / (df['FGA'] - -df['3PA'])
     df.replace([float('inf'), -float('inf')], 0, inplace=True)
 
     return df, label_encoders
 
 def display_label_encodings(label_encoder):
+    os.system('cls')
     for feature, encoder in label_encoder.items():
-        print(f"Label encodings for {feature}:")
+        print(Fore.LIGHTCYAN_EX + f"Label encodings for {feature}:")
         for index, label in enumerate(encoder.classes_):
-            print(f"  {index}: {label}")
+            print(Fore.WHITE + f"  {index}: {label}")
         print()
+    input('\nPress any key to continue.')
+    os.system('cls')
+    
         
 def print_settings():
     print("\nCurrent Settings:")
@@ -98,8 +110,8 @@ def print_settings():
 def change_setting():
     os.system('cls')
     print_settings()
-    setting_key = input("Enter the setting you want to change (or 'exit' to return): ")
-    if setting_key.lower() == 'exit':
+    setting_key = input("Enter the setting you want to change (or 'x' to return): ")
+    if setting_key.lower() == 'x':
         return
     if setting_key in settings:
         new_value = input(f"Enter new value for {setting_key} (current: {settings[setting_key]}): ")
@@ -114,20 +126,44 @@ def change_setting():
 def settings_menu():
     while True:
         os.system('cls')
-        print("Settings Menu")
+        print(Fore.LIGHTBLUE_EX + "Settings Menu" + Fore.WHITE)
         print_settings()
-        print("2. Change Setting")
-        print("3. Return to Main Menu")
-        choice = input("Enter choice: ")
+        print("1 - Change setting")
+        print("2 - Exit settings")
+        choice = input('\n')
         if choice == '1':
-            print_settings()
-        elif choice == '2':
             change_setting()
-        elif choice == '3':
+        elif choice == '2':
             os.system('cls')
             break
         else:
             print("Invalid choice, please try again.")
+
+def setup_logging(): 
+    timestamp = datetime.now().strftime('%m-%d-%Y')
+    log_dir = f'logs/{timestamp}'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    error_log_path = os.path.join(log_dir, 'errors.log')
+    error_logger = logging.getLogger('error_logger')
+    error_handler = logging.FileHandler(error_log_path)
+    error_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    error_handler.setFormatter(error_formatter)
+    error_logger.setLevel(logging.ERROR)
+    error_logger.addHandler(error_handler)
+    
+    prediction_log_path = os.path.join(log_dir, 'predictions.log')
+    prediction_logger = logging.getLogger('prediction_logger')
+    prediction_handler = logging.FileHandler(prediction_log_path)
+    prediction_formatter = logging.Formatter('%(asctime)s - %(message)s')
+    prediction_handler.setFormatter(prediction_formatter)
+    prediction_logger.setLevel(logging.INFO)
+    prediction_logger.addHandler(prediction_handler)
+    
+    return error_logger, prediction_logger
+
+
 
 print(Fore.YELLOW + 'Welcome to the ML Basketball Tool!\nPress enter to get started!')
 while True:
@@ -135,27 +171,29 @@ while True:
     if(user_input == ''):
         break
 
-
+#initialize preprocessing
 try:
     set1, mappings = preprocess(file_path_t_haliburton_regszn)
     
 except Exception as e:
     print(Fore.RED + f'Error during preprocessing: {e}')
-
-
-os.system('cls')
 print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
-#set1 = preprocess(file_path_t_haliburton_playoffs)
 
-#target = set1.iloc[:1]
-#set1 = set1.iloc[1:]
+#initialize logging service
+try:
+    error_logger, prediction_logger = setup_logging()
+except Exception as e:
+    print(Fore.RED + f'Error during intializing logging service: {e}')
+print(Fore.GREEN + f'Logging service setup complete. See file path /logs/{datetime.now().strftime('%m-%d-%Y')} for output logs')
 
-#MAIN LOOP FOR DIAGRAMS
+input(Fore.WHITE + '\nPress any key to continue.')
+
+#diagram service main loop
 def diagram_service():
     while(True):
        
         print(Fore.LIGHTGREEN_EX + 'VISUALIZATIONS DASHBOARD:\nChoose from the following numbered options\n')
-        data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Back to previous screen\n")
+        data = input(Fore.WHITE + "1 - Points Histogram\n2 - Scatter plot of points vs. minutes played\n3 - Scatter plot of points vs. rebounds_assists_ratio\n4 - Scattor plot of points vs. assists\n5 - Show entire data table\nx - Back to previous screen\n")
         match data:
             case '1':
                 # Histogram of points scored
@@ -187,16 +225,26 @@ def diagram_service():
                 plt.show()
             case '5':
                 os.system('cls')
+                display_set1 = set1.copy()
+                display_set1['Date'] = pandas.to_datetime(display_set1['Date'], unit='s')
+                print(display_set1)
+                input('\nPress any key to continue.')
+                os.system('cls')
+            case 'x':
+                os.system('cls')
                 break
         os.system('cls')
 
+#ANSI cleaner
+def ansi_cleaner(text):
+    return re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]').sub('', text)
 
 avg_pts = set1['PTS'].mean()
 
 def train_model():
     try:
         # model creation
-        X = set1[['Point_Diff', 'Result_enc', 'LOC_@', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
+        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
         #X = set1.drop(columns=['Line'])
         y = set1['above_line'].astype(int)
 
@@ -216,6 +264,7 @@ def train_model():
         return model, X_train, X_test, y_train, y_test, y_pred, X, y
     except Exception as e:
         print(Fore.RED + f"Error during model training: {e}")
+        error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
     print(Fore.LIGHTGREEN_EX + 'Data trained!')
 
 model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
@@ -237,17 +286,19 @@ new_data = pandas.DataFrame({
     'PTS': [set1.iloc[:6]['PTS'].mean()],
     'Line': [18.5],
     'Opp_encoded' : [1],
-    'LOC_@': [1],
+    'LOC_encoded': [1],
     'Result_enc': [0],
     'Point_Diff': [-9]
 
 })
 
+#print(set1.iloc[:6]['MP'].mean())
+
 #INTERACTIVE QUERIES
 #MAIN LOOP FOR MODEL ANALYSIS
 while(True):
     print(Fore.GREEN + 'Choose from the following options:\n')
-    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Quit\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\nx - Quit\n')
     os.system('cls')
     match data:
         case '1':
@@ -273,7 +324,7 @@ while(True):
             print(Fore.WHITE)
         case '4': #custom query menu
             while(True):
-                print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee documentation for official list of codes and explanations.')
+                print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee label mappings/documentation for official list of codes and explanations.')
                 print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Loss], [Spread]')
                 print('EXAMPLE: 30, 0.52, 0.37, 0.76, 5, 7, 1, 0, 3, 18.5, 1, 0, 0, +7.5')
                 print('\n')
@@ -289,10 +340,11 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Opp_encoded', 'LOC_@', 'Result_enc', 'Point_Diff']
+                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Opp_encoded', 'LOC_encoded', 'Result_enc', 'Point_Diff']
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
                             new_data[field_list[i]] = set1.iloc[:6][field_list[i]].mean()
+                            print(new_data[field_list[i]])
                         else:
                             new_data[field_list[i]] = [data[i].strip('+')]
                     
@@ -307,25 +359,31 @@ while(True):
         
 
                     os.system('cls')
-                    print(f'YOUR DATA: \n{new_data}')
+                    
                     next_game_prediction = model.predict(new_data[X.columns])
 
                     #print(np.mean(y_pred == y_test))
+                    your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
+                    prediction_output = Fore.YELLOW + f'NEXT GAME:' + Fore.WHITE + f'\nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}'
+                    prediction_logger.info(ansi_cleaner(f'Prediction Result:\n{your_data}\n{prediction_output}\n\n'))
 
-                    print(Fore.WHITE + f'NEXT GAME: \nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}')
+                    print(your_data)
+                    print(prediction_output)
+
                     input(Fore.WHITE + '\nPress any key to continue.')
                     os.system('cls')
 
                 except Exception as e:
                     print(f'Error during data input: {e}\nYour data was likely input incorrectly; Please follow the format.\nPress any key to retry.')
+                    error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
                     data = input()
                     os.system('cls')
 
-                
-            
         case '5':
             settings_menu()
         case '6':
+            display_label_encodings(mappings)
+        case 'x':
             quit()
 
 
