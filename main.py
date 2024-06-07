@@ -101,6 +101,34 @@ def preprocess(file_path):
     df['3pa_fga_ratio'] = df ['3PA'] / (df['FGA'] - -df['3PA'])
     df.replace([float('inf'), -float('inf')], 0, inplace=True)
 
+    # Calculate season average stats
+    season_avg_pts = df['PTS'].mean()
+    season_avg_ast = df['AST'].mean()
+    season_avg_trb = df['TRB'].mean()
+
+    # Calculate performance deviation from average
+    df['deviation_pts'] = df['PTS'] - season_avg_pts
+    df['deviation_ast'] = df['AST'] - season_avg_ast
+    df['deviation_trb'] = df['TRB'] - season_avg_trb
+
+    # Calculate rolling statistics with min_periods=1 to avoid NaN for fewer games
+    df['rolling_std_pts'] = df['PTS'].rolling(window=5, min_periods=1).std()
+    df['rolling_std_ast'] = df['AST'].rolling(window=5, min_periods=1).std()
+    df['rolling_std_trb'] = df['TRB'].rolling(window=5, min_periods=1).std()
+
+    df['rolling_mean_pts'] = df['PTS'].rolling(window=5, min_periods=1).mean()
+    df['rolling_mean_ast'] = df['AST'].rolling(window=5, min_periods=1).mean()
+    df['rolling_mean_trb'] = df['TRB'].rolling(window=5, min_periods=1).mean()
+
+    df['z_score_pts'] = (df['PTS'] - df['rolling_mean_pts']) / df['rolling_std_pts'].replace(0, 1)
+    df['z_score_ast'] = (df['AST'] - df['rolling_mean_ast']) / df['rolling_std_ast'].replace(0, 1)
+    df['z_score_trb'] = (df['TRB'] - df['rolling_mean_trb']) / df['rolling_std_trb'].replace(0, 1)
+
+    return df, label_encoders
+
+    return df, label_encoders
+
+
     return df, label_encoders
 
 def display_label_encodings(label_encoder):
@@ -359,7 +387,7 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Point_Diff', 'LOC_encoded', 'Opp_encoded','Result_enc', 'above_line']
+                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Point_Diff', 'LOC_encoded', 'Opp_encoded','Result_enc']
                     field_list = X.columns
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
@@ -376,7 +404,27 @@ while(True):
                     # Convert 'Point_Diff' to numeric (if applicable)
                     new_data['Point_Diff'] = pandas.to_numeric(new_data['Point_Diff'], errors='coerce')
 
+                    # Calculate rolling standard deviation for points, assists, and rebounds over the last 5 games
+                    rolling_window = min(5, len(set1))
+                    new_data['rolling_std_pts'] = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+                    new_data['rolling_std_ast'] = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+                    new_data['rolling_std_trb'] = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
 
+                    # Calculate rolling mean and standard deviation for points
+                    rolling_mean_pts = set1['PTS'].rolling(window=5, min_periods=1).mean().iloc[-1]
+                    rolling_std_pts = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+
+                    # Calculate Z-score for points
+                    new_data['z_score_pts'] = (new_data['PTS'] - rolling_mean_pts) / rolling_std_pts if rolling_std_pts != 0 else 0
+
+                    # Repeat for assists and rebounds
+                    rolling_mean_ast = set1['AST'].rolling(window=5, min_periods=1).mean().iloc[-1]
+                    rolling_std_ast = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+                    new_data['z_score_ast'] = (new_data['AST'] - rolling_mean_ast) / rolling_std_ast if rolling_std_ast != 0 else 0
+
+                    rolling_mean_trb = set1['TRB'].rolling(window=5, min_periods=1).mean().iloc[-1]
+                    rolling_std_trb = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
+                    new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
 
                     os.system('cls')
                     
