@@ -10,12 +10,14 @@ import re
 import os
 import logging
 from datetime import datetime
+import traceback
 #import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
-file_path_t_haliburton_regszn = 'data/t_haliburton_23-24_regszn.csv'
-file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
+file_path = 'data\horford_reg_szn.csv'
+#file_path = 'data/t_haliburton_23-24_regszn.csv'
+#file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
 settings = {
     #default values
@@ -71,6 +73,7 @@ def preprocess(file_path):
     df['Result_enc'] = label_encoders['Result'].fit_transform(df['Result'])
 
     df['MP'] = df['MP'].apply(convert_mp_to_minutes)
+    df['MP'] = df['MP'].astype(float)
 
     if 'Date' in df.columns:
         df['Date'] = pandas.to_datetime(df['Date']).astype('int64') / 10**9  # Convert to seconds since epoch
@@ -83,8 +86,9 @@ def preprocess(file_path):
     df['3P%'] = pandas.to_numeric(df['3P%'], errors='coerce')
 
     df['above_line'] = df['PTS'] > df['Line']
+    df['above_line'] = df['above_line'].astype('int')
     df['rebounds_assists_ratio'] = df['TRB'] / df['AST']
-    df['pts_reb+ast_ratio'] = float(df['PTS'] / (df['TRB'] + df['AST']))
+    df['pts_reb+ast_ratio'] = df['PTS'] / (df['TRB'] + df['AST'])
     df['3pa_fga_ratio'] = df ['3PA'] / (df['FGA'] - -df['3PA'])
     df.replace([float('inf'), -float('inf')], 0, inplace=True)
 
@@ -95,7 +99,7 @@ def display_label_encodings(label_encoder):
     for feature, encoder in label_encoder.items():
         print(Fore.LIGHTCYAN_EX + f"Label encodings for {feature}:")
         for index, label in enumerate(encoder.classes_):
-            print(Fore.WHITE + f"  {index}: {label}")
+            print(Fore.WHITE + f"{index}: {label}")
         print()
     input('\nPress any key to continue.')
     os.system('cls')
@@ -173,11 +177,11 @@ while True:
 
 #initialize preprocessing
 try:
-    set1, mappings = preprocess(file_path_t_haliburton_regszn)
+    set1, mappings = preprocess(file_path)
     
 except Exception as e:
     print(Fore.RED + f'Error during preprocessing: {e}')
-print(Fore.GREEN + f'Preprocessing complete of file: {file_path_t_haliburton_regszn}\n')
+print(Fore.GREEN + f'Preprocessing complete of file: {file_path}\n')
 
 #initialize logging service
 try:
@@ -186,7 +190,11 @@ except Exception as e:
     print(Fore.RED + f'Error during intializing logging service: {e}')
 print(Fore.GREEN + f'Logging service setup complete. See file path /logs/{datetime.now().strftime('%m-%d-%Y')} for output logs')
 
+print(set1.iloc[:1]['MP'])
+
 input(Fore.WHITE + '\nPress any key to continue.')
+
+
 
 #diagram service main loop
 def diagram_service():
@@ -270,27 +278,29 @@ def train_model():
 model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
 #test data
-new_data = pandas.DataFrame({
-    'MP': [set1.iloc[:6]['MP'].mean()],
-    'FG%': [set1.iloc[:6]['FG%'].mean()],
-    '3P%': [set1.iloc[:6]['3P%'].mean()],
-    'FT%': [set1.iloc[:6]['FT%'].mean()],
-    'TRB': [set1.iloc[:6]['TRB'].mean()],
-    'AST': [set1.iloc[:6]['AST'].mean()],
-    'STL': [set1.iloc[:6]['STL'].mean()],
-    'BLK': [set1.iloc[:6]['BLK'].mean()],
-    'TOV': [set1.iloc[:6]['TOV'].mean()],
-    'rebounds_assists_ratio': [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()],
-    'pts_reb+ast_ratio': [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())],
-    '3pa_fga_ratio': [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())],
-    'PTS': [set1.iloc[:6]['PTS'].mean()],
-    'Line': [18.5],
-    'Opp_encoded' : [1],
-    'LOC_encoded': [1],
-    'Result_enc': [0],
-    'Point_Diff': [-9]
+# new_data = pandas.DataFrame({
+#     'MP': [set1.iloc[:6]['MP'].mean()],
+#     'FG%': [set1.iloc[:6]['FG%'].mean()],
+#     '3P%': [set1.iloc[:6]['3P%'].mean()],
+#     'FT%': [set1.iloc[:6]['FT%'].mean()],
+#     'TRB': [set1.iloc[:6]['TRB'].mean()],
+#     'AST': [set1.iloc[:6]['AST'].mean()],
+#     'STL': [set1.iloc[:6]['STL'].mean()],
+#     'BLK': [set1.iloc[:6]['BLK'].mean()],
+#     'TOV': [set1.iloc[:6]['TOV'].mean()],
+#     'rebounds_assists_ratio': [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()],
+#     'pts_reb+ast_ratio': [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())],
+#     '3pa_fga_ratio': [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())],
+#     'PTS': [set1.iloc[:6]['PTS'].mean()],
+#     'Line': [18.5],
+#     'Opp_encoded' : [1],
+#     'LOC_encoded': [1],
+#     'Result_enc': [0],
+#     'Point_Diff': [-9]
 
-})
+# })
+
+#new_data = pandas.DataFrame()
 
 #print(set1.iloc[:6]['MP'].mean())
 
@@ -325,7 +335,8 @@ while(True):
         case '4': #custom query menu
             while(True):
                 print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee label mappings/documentation for official list of codes and explanations.')
-                print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away], [Expected Win/Loss], [Spread]')
+                #print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away (0 is home, 1 is away)], [Expected Win/Loss (0 L/ 1 W)], [Spread], [Expected over/under (0 Under/1 Over)]')
+                print("FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'")
                 print('EXAMPLE: 30, 0.52, 0.37, 0.76, 5, 7, 1, 0, 3, 18.5, 1, 0, 0, +7.5')
                 print('\n')
                 print('Enter your stats (or \'x\' to return to previous menu):')
@@ -340,7 +351,8 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Opp_encoded', 'LOC_encoded', 'Result_enc', 'Point_Diff']
+                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Point_Diff', 'LOC_encoded', 'Opp_encoded','Result_enc', 'above_line']
+                    field_list = X.columns
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
                             new_data[field_list[i]] = set1.iloc[:6][field_list[i]].mean()
@@ -356,11 +368,11 @@ while(True):
                     # Convert 'Point_Diff' to numeric (if applicable)
                     new_data['Point_Diff'] = pandas.to_numeric(new_data['Point_Diff'], errors='coerce')
 
-        
+
 
                     os.system('cls')
                     
-                    next_game_prediction = model.predict(new_data[X.columns])
+                    next_game_prediction = model.predict(new_data)
 
                     #print(np.mean(y_pred == y_test))
                     your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
@@ -374,6 +386,9 @@ while(True):
                     os.system('cls')
 
                 except Exception as e:
+                    #print(f'\n{X[X.isna().any(axis=1)]}')
+                    #print(traceback.format_exc())
+
                     print(f'Error during data input: {e}\nYour data was likely input incorrectly; Please follow the format.\nPress any key to retry.')
                     error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
                     data = input()
