@@ -15,8 +15,8 @@ import traceback
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
-file_path = 'data\horford_reg_szn.csv'
-#file_path = 'data/t_haliburton_23-24_regszn.csv'
+#file_path = 'data/horford_reg_szn.csv'
+file_path = 'data/t_haliburton_23-24_regszn.csv'
 #file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
 settings = {
@@ -50,41 +50,50 @@ def convert_mp_to_minutes(mp_str):
     
 def preprocess(file_path):
     
+    #read csv
     df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
 
+    #split the result and point diff from the W/L column
     df[['Result', 'Point_Diff']] = df['W/L'].str.extract(r'([WL])\s*\(([-+]?\d+)\)?')
 
+    #drop NaNs from the MP because the model freaks out if there's any NaNs
     df = df.dropna(subset=['MP'])
 
+    #drop extraneous/old columns
     df = df.drop(columns=['Rk', 'G', 'Age', 'Tm', 'W/L'])
 
-    # Convert 'Point_Diff' to numeric (if applicable)
+    # convert 'Point_Diff' to numeric (if applicable)
     df['Point_Diff'] = pandas.to_numeric(df['Point_Diff'], errors='coerce')
 
-
+    #store encoded data in a dictionary for user reference
     label_encoders = {}
     label_encoders['Opp'] = LabelEncoder()
     label_encoders['Result'] = LabelEncoder()
     label_encoders['LOC'] = LabelEncoder()
     
-    
+    #encode data that must be in boolean format (W/L must be 0 or 1, etc.) 
     df['LOC_encoded'] = label_encoders['LOC'].fit_transform(df['LOC'])
     df['Opp_encoded'] = label_encoders['Opp'].fit_transform(df['Opp'])
     df['Result_enc'] = label_encoders['Result'].fit_transform(df['Result'])
 
+    #convert minutes played to a number and strip colons
     df['MP'] = df['MP'].apply(convert_mp_to_minutes)
     df['MP'] = df['MP'].astype(float)
 
+    # Convert to seconds since epoch. This one is less of a requirement for the model and more of one
+    # for the model just to work as it doesn't do well with datetime objects. 
     if 'Date' in df.columns:
-        df['Date'] = pandas.to_datetime(df['Date']).astype('int64') / 10**9  # Convert to seconds since epoch
+        df['Date'] = pandas.to_datetime(df['Date']).astype('int64') / 10**9  
 
+    #remove any NaNs if still exist
     df.fillna(0, inplace=True)
 
-    avg_pts = df['PTS'].mean()
+    #convert to numeric
     df['MP'] = pandas.to_numeric(df['MP'], errors='coerce')
     df['FG%'] = pandas.to_numeric(df['FG%'], errors='coerce')
     df['3P%'] = pandas.to_numeric(df['3P%'], errors='coerce')
 
+    #feature generation
     df['above_line'] = df['PTS'] > df['Line']
     df['above_line'] = df['above_line'].astype('int')
     df['rebounds_assists_ratio'] = df['TRB'] / df['AST']
@@ -190,8 +199,6 @@ except Exception as e:
     print(Fore.RED + f'Error during intializing logging service: {e}')
 print(Fore.GREEN + f'Logging service setup complete. See file path /logs/{datetime.now().strftime('%m-%d-%Y')} for output logs')
 
-print(set1.iloc[:1]['MP'])
-
 input(Fore.WHITE + '\nPress any key to continue.')
 
 
@@ -258,15 +265,16 @@ def train_model():
 
         os.system('cls')
 
+        #create train and test objects from the train_test_split method according to settings paramters
+        #default test_size is 0.2, meaning %20 of the data is reserved for test cases and the rest for training data
+        #random state is the seed for the random number gen
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=settings['test_size'], random_state=settings['random_state'])
-        #X_train = X.iloc[:75]
-        #y_train = y.iloc[:75]
-        #X_test = X.iloc[75:83]
-        #y_test = y.iloc[75:83]
-
+    
+        #create and fit the model according to the generated training data
         model = LogisticRegression(max_iter=1000)
         model.fit(X_train, y_train)
 
+        #predict against the test cases to generate evaluation data.
         y_pred = model.predict(X_test)
 
         return model, X_train, X_test, y_train, y_test, y_pred, X, y
@@ -337,7 +345,7 @@ while(True):
                 print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee label mappings/documentation for official list of codes and explanations.')
                 #print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away (0 is home, 1 is away)], [Expected Win/Loss (0 L/ 1 W)], [Spread], [Expected over/under (0 Under/1 Over)]')
                 print("FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'")
-                print('EXAMPLE: 30, 0.52, 0.37, 0.76, 5, 7, 1, 0, 3, 18.5, 1, 0, 0, +7.5')
+                print('EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5')
                 print('\n')
                 print('Enter your stats (or \'x\' to return to previous menu):')
                 data = input().split(',')
