@@ -124,6 +124,8 @@ def preprocess(file_path):
     df['z_score_ast'] = (df['AST'] - df['rolling_mean_ast']) / df['rolling_std_ast'].replace(0, 1)
     df['z_score_trb'] = (df['TRB'] - df['rolling_mean_trb']) / df['rolling_std_trb'].replace(0, 1)
 
+    df.fillna(0, inplace=True)
+
     return df, label_encoders
 
     return df, label_encoders
@@ -287,7 +289,7 @@ avg_pts = set1['PTS'].mean()
 def train_model():
     try:
         # model creation
-        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']]
+        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb']]
         #X = set1.drop(columns=['Line'])
         y = set1['above_line'].astype(int)
 
@@ -387,8 +389,8 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'PTS', 'Point_Diff', 'LOC_encoded', 'Opp_encoded','Result_enc']
-                    field_list = X.columns
+                    field_list = ['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']
+                    #field_list = X.columns
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
                             new_data[field_list[i]] = set1.iloc[:6][field_list[i]].mean()
@@ -400,9 +402,9 @@ while(True):
                     new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
                     new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
 
-
-                    # Convert 'Point_Diff' to numeric (if applicable)
-                    new_data['Point_Diff'] = pandas.to_numeric(new_data['Point_Diff'], errors='coerce')
+                    new_data['PTS'] = new_data['PTS'].astype(float)
+                    new_data['AST'] = new_data['AST'].astype(float)
+                    new_data['TRB'] = new_data['TRB'].astype(float)
 
                     # Calculate rolling standard deviation for points, assists, and rebounds over the last 5 games
                     rolling_window = min(5, len(set1))
@@ -443,7 +445,7 @@ while(True):
 
                 except Exception as e:
                     #print(f'\n{X[X.isna().any(axis=1)]}')
-                    #print(traceback.format_exc())
+                    print(traceback.format_exc())
 
                     print(f'Error during data input: {e}\nYour data was likely input incorrectly; Please follow the format.\nPress any key to retry.')
                     error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
