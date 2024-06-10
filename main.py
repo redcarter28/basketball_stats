@@ -17,6 +17,8 @@ import easygui
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
+print('Intitializing...')
+
 #file_path = 'data/horford_reg_szn.csv'
 #file_path = 'data/t_haliburton_23-24_regszn.csv'
 file_path = easygui.fileopenbox()
@@ -33,6 +35,7 @@ settings = {
 #set1 = pandas.read_csv(file_path_t_haliburton_regszn, parse_dates=['Date'], dtype={'G': str})
 #set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
 os.system('cls')
+
 def convert_mp_to_minutes(mp_str):
     try:
         if isinstance(mp_str, pandas.Timestamp):
@@ -126,6 +129,8 @@ def preprocess(file_path):
     df['z_score_pts'] = (df['PTS'] - df['rolling_mean_pts']) / df['rolling_std_pts'].replace(0, 1)
     df['z_score_ast'] = (df['AST'] - df['rolling_mean_ast']) / df['rolling_std_ast'].replace(0, 1)
     df['z_score_trb'] = (df['TRB'] - df['rolling_mean_trb']) / df['rolling_std_trb'].replace(0, 1)
+
+    df['rolling_mp'] = df['MP'].rolling(window=5, min_periods=1).mean()
 
     df.fillna(0, inplace=True)
 
@@ -292,7 +297,7 @@ avg_pts = set1['PTS'].mean()
 def train_model():
     try:
         # model creation
-        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb']]
+        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb', 'rolling_mp']]
         #X = set1.drop(columns=['Line'])
         y = set1['above_line'].astype(int)
 
@@ -392,7 +397,7 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']
+                    field_list = ['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio']
                     #field_list = X.columns
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
@@ -430,6 +435,8 @@ while(True):
                     rolling_mean_trb = set1['TRB'].rolling(window=5, min_periods=1).mean().iloc[-1]
                     rolling_std_trb = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
                     new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
+
+                    new_data['rolling_mp'] = new_data['MP'].rolling(window=5, min_periods=1).mean()
 
                     os.system('cls')
                     
