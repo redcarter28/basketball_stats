@@ -156,11 +156,6 @@ def preprocess(file_path):
 
     return df, label_encoders
 
-    return df, label_encoders
-
-
-    return df, label_encoders
-
 def display_label_encodings(label_encoder):
     os.system('cls')
     for feature, encoder in label_encoder.items():
