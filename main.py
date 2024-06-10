@@ -1,9 +1,10 @@
 import pandas
 import matplotlib.pyplot as plt
+from scipy.stats import linregress
+import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
 from colorama import Fore
 import re
@@ -54,6 +55,18 @@ def convert_mp_to_minutes(mp_str):
         print(f"Error converting {mp_str}: {e}")
         return 0
     
+def calculate_trend(series, window=5):
+    trend = []
+    for i in range(len(series)):
+        if i < window - 1:
+            trend.append(np.nan)
+        else:
+            y = series[i - window + 1:i + 1]
+            x = np.arange(len(y))
+            slope, _, _, _, _ = linregress(x, y)
+            trend.append(slope)
+    return pandas.Series(trend, index=series.index)
+
 def preprocess(file_path):
     
     #read csv
@@ -131,6 +144,13 @@ def preprocess(file_path):
     df['z_score_trb'] = (df['TRB'] - df['rolling_mean_trb']) / df['rolling_std_trb'].replace(0, 1)
 
     df['rolling_mp'] = df['MP'].rolling(window=5, min_periods=1).mean()
+
+    # Calculate trends
+    df['trend_mp'] = calculate_trend(df['MP'])
+    df['trend_pts'] = calculate_trend(df['PTS'])
+    df['trend_ast'] = calculate_trend(df['AST'])
+    df['trend_trb'] = calculate_trend(df['TRB'])
+
 
     df.fillna(0, inplace=True)
 
@@ -297,7 +317,7 @@ avg_pts = set1['PTS'].mean()
 def train_model():
     try:
         # model creation
-        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb', 'rolling_mp']]
+        X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb', 'rolling_mp', 'trend_mp', 'trend_pts', 'trend_ast', 'trend_trb']]
         #X = set1.drop(columns=['Line'])
         y = set1['above_line'].astype(int)
 
@@ -397,7 +417,7 @@ while(True):
 
                 try:
                     new_data = pandas.DataFrame()
-                    field_list = ['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio']
+                    field_list = ['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS']
                     #field_list = X.columns
                     for i in range(0, len(data)):
                         if(data[i] == 'avg'):
@@ -437,6 +457,13 @@ while(True):
                     new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
 
                     new_data['rolling_mp'] = new_data['MP'].rolling(window=5, min_periods=1).mean()
+
+                    new_data['trend_mp'] = set1['MP']
+                    new_data['trend_pts'] = set1['PTS']
+                    new_data['trend_ast'] = set1['AST']
+                    new_data['trend_trb'] = set1['TRB']
+
+                    new_data.fillna(0, inplace=True)
 
                     os.system('cls')
                     
