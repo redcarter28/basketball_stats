@@ -1,0 +1,33 @@
+Installation and Setup:
+    1.	Prerequisites: Ensure Python and necessary libraries are installed
+        •	The following external libraries are required: 
+    1.	scikit-learn
+    2.	easygui
+    3.	pandas
+    4.	matplotlib
+        •	They can be installed using the command: pip install <name>
+    2.	Download Data: Obtain the raw datasets 
+        •	Basketballreference.com - Tyrese Haliburton 23/24 Full Season/Playoffs
+        •	Bettingpros.com - Tyrese Haliburton Historical Lines
+    1.	This one must be scraped utilizing the table capture extension (referenced in sources).
+    2.	To Scrape: Extensions > Tables > Choose the largest table, mine was 85 x 15 table,  press blue sheet with green plus icon to copy data and paste in topleftmost cell in excel. Save for now.
+    3.	Clean Data: The following cleaning actions must be preformed IN ORDER
+        •	Delete ALL rows with DNP/DND/Missing data fields. This step is the most crucial as NaNs must not exist in the dataset. You must select the entire numbered row on the left hand side on the window, right click, and press delete so that the rows delete and move up properly after deletion.
+        •	Ctrl + A to select all > Right Click > Sort > Custom Sort > Ensure ‘My data has headers’ is checked (top right) > Sort by Date, Sort on Cell Values, Order Newest to Oldest
+        •	From the scraped table data, select the ‘Prop Line’ column and paste it on the right side of the combined season csv file. The last three columns should look like:
+        •	 GmSc , +/- , Line 
+        •	Delete ALL rows where ‘NL’ is listed. Again, right click and delete whole row. 
+        •	Change column ‘F’ to LOC
+        •	Change column ‘H’ to W/L
+        •	Change column ‘AE’ from Prop Line to just Line
+        •	Move csv files into a good folder for safekeeping. For simplicity, there is the ‘data’ folder in the main project directory which works just fine. The program will ask you to select a file. Once completed, you are now ready to use the program.
+Usage:
+    1.	Run Program: execute main.py (or .exe if compiled from source)
+
+    2.	Follow Prompts: There are a few features to note
+        •	Option 1 – Visualizations can show you the scatter plots as well as the entire processed pandas data table
+        •	Option 2 – Accuracy/Classification Report shows the accuracy report for the trained model
+        •	Option 3 – Re-train the model (self-explanatory, but must be done after tweaking any settings)
+        •	Option 4 – Enter custom query allows users to input custom data to predict and classify a future match. An example query is provided which works for the t_haliburton_23-24_regszn.csv dataset. 
+        •	Option 5 – Settings shows settings that can be tweaked
+        •	Option 6 – Label Mappings shows the encoded labels that the preprocessing algorithm generated. It assigns teams their own ID (alphabetically), W/L as 1/0, and Home/Away as 0/1 (in the actual dataset, 1 = away because it is represented with a ‘@’ symbol and home has no symbol, hence the 0 home/1 away)
