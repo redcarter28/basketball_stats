@@ -11,12 +11,15 @@ import os
 import logging
 from datetime import datetime
 import traceback
+import easygui
+
 #import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
 #file_path = 'data/horford_reg_szn.csv'
-file_path = 'data/t_haliburton_23-24_regszn.csv'
+#file_path = 'data/t_haliburton_23-24_regszn.csv'
+file_path = easygui.fileopenbox()
 #file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
 settings = {
