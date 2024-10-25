@@ -1,7 +1,12 @@
 #  Basketball Data Analysis (Adaptable for Any Player)
 
-A Python-based data analysis and machine learning project focused on analyzing player performance, using Tyrese Haliburton's 2023/2024 season data as an example. This program can be adapted for any basketball player by following the same steps.
+A Python-based data analysis and machine learning project focused on using logistic regression analysis to attempt to 'classify' a player's future points performance based off of input sportsbook lines. Although I use Al Horford/Tyrese Haliburton's 2023/2024 season data as an example, this program can be adapted for any basketball player by following the same steps. 
 
+## Features
+This tool can be used for the following:
+- **Over-Under Prediction** - Several stats are pulled from basketballreference in the csv dump to generate *features* that further capture a players performance
+- **Accuracy Reporting** - A preformance report/confusion matrix is shown to provide feedback on the model's accuracy on backtested data
+- **Fine-tuning** - The ability to re-train the model in-app, and a settings option that allows for the test size or random seed to be tweaked
 
 ## Prerequisites
 
