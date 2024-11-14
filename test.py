@@ -17,7 +17,7 @@ service = ChromeService(executable_path="C:\\Users\\Abraham\\Documents\\C964\\ch
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # Fetch the webpage
-url = 'https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'  # Replace with your URL
+url = 'https://www.bettingpros.com/nba/props/dereck-lively-ii/points/'  # Replace with your URL
 driver.get(url)
 
 # Wait for the page to load content dynamically

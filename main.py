@@ -13,10 +13,13 @@ import logging
 from datetime import datetime
 import traceback
 import easygui
+import rc_util
 
 #import numpy as np
 
 pandas.options.display.float_format = '{:,.2f}'.format
+
+print(rc_util.get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023'))
 
 print('Intitializing...')
 
