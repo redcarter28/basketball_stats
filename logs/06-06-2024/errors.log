@@ -1,0 +1,108 @@
+2024-06-06 15:14:11,601 - ERROR - An error occurred: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2024-06-06 15:14:52,122 - ERROR - An error occurred: 'Point_Diff'
+2024-06-06 15:15:05,278 - ERROR - An error occurred: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2024-06-06 15:27:56,961 - ERROR - An error occurred: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2024-06-06 15:29:47,362 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- 3pa_fga_ratio
+- pts_reb+ast_ratio
+- rebounds_assists_ratio
+
+2024-06-06 15:31:00,285 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 15:31:32,267 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 15:33:00,945 - ERROR - An error occurred: 'Point_Diff'
+2024-06-06 15:33:01,854 - ERROR - An error occurred: 'Point_Diff'
+2024-06-06 15:34:21,000 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 15:34:59,868 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 15:40:34,451 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 16:05:39,779 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 16:06:40,482 - ERROR - An error occurred: could not convert string to float: 'MP'
+2024-06-06 16:07:24,163 - ERROR - An error occurred: 'Point_Diff'
+2024-06-06 16:07:33,759 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- above_line
+
+2024-06-06 16:08:46,188 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- above_line
+
+2024-06-06 16:19:09,628 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- above_line
+
+2024-06-06 16:26:54,281 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- Line
+- above_line
+
+2024-06-06 16:29:08,469 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- Line
+- above_line
+
+2024-06-06 16:29:30,863 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- Line
+
+2024-06-06 16:30:04,102 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:39:21,189 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:43:00,227 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:44:53,217 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:44:58,906 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:46:14,315 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-06 16:54:05,321 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- above_line
+
+2024-06-06 16:59:52,169 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- 3P%
+- 3pa_fga_ratio
+- AST
+- BLK
+- FG%
+- ...
+
+2024-06-06 16:59:56,335 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- 3P%
+- 3pa_fga_ratio
+- AST
+- BLK
+- FG%
+- ...
+
+2024-06-06 17:03:55,229 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- 3P%
+- AST
+- BLK
+- FG%
+- FT%
+- ...
+
+2024-06-06 17:24:50,571 - ERROR - An error occurred: index 17 is out of bounds for axis 0 with size 17
+2024-06-06 17:26:43,257 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names seen at fit time, yet now missing:
+- 3P%
+- AST
+- BLK
+- FG%
+- FT%
+- ...
+

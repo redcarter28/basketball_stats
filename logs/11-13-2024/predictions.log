@@ -1,0 +1,11 @@
+2024-11-13 16:35:08,035 - Prediction Result:
+YOUR DATA:
+  Point_Diff Result_enc LOC_encoded Opp_encoded    MP  FG%  3P%  FT%  ...  z_score_pts  z_score_ast z_score_trb rolling_mp trend_mp  trend_pts  trend_ast  trend_trb
+0        1.5        0.1           0          19 32.20 0.48 0.35 0.79  ...        -0.03        -1.90        0.31      32.20    26.90         20         11          3
+
+[1 rows x 28 columns]
+
+NEXT GAME:
+Prediction: Below Line
+
+

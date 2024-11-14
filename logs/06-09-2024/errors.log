@@ -1,0 +1,36 @@
+2024-06-09 14:01:23,847 - ERROR - An error occurred: unsupported operand type(s) for -: 'str' and 'float'
+2024-06-09 14:02:09,112 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:02:17,832 - ERROR - An error occurred: unsupported operand type(s) for -: 'str' and 'float'
+2024-06-09 14:05:32,666 - ERROR - An error occurred: 'Point_Diff'
+2024-06-09 14:05:55,259 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:05:58,188 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:07:11,429 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:07:42,619 - ERROR - An error occurred: unsupported operand type(s) for -: 'str' and 'float'
+2024-06-09 14:07:59,986 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:08:07,397 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names unseen at fit time:
+- rolling_std_ast
+- rolling_std_pts
+- rolling_std_trb
+- z_score_ast
+- z_score_pts
+- ...
+
+2024-06-09 14:09:22,399 - ERROR - An error occurred: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2024-06-09 14:09:29,515 - ERROR - An error occurred: Input X contains NaN.
+LogisticRegression does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2024-06-09 14:11:27,028 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names unseen at fit time:
+- z_score_trb
+
+2024-06-09 14:13:14,767 - ERROR - An error occurred: The feature names should match those that were passed during fit.
+Feature names must be in the same order as they were in fit.
+
+2024-06-09 14:22:58,541 - ERROR - An error occurred: 'PTS'
+2024-06-09 14:37:29,097 - ERROR - An error occurred: could not convert string to float: '7.0 0'
+2024-06-09 14:37:35,589 - ERROR - An error occurred: list index out of range
+2024-06-09 14:38:21,330 - ERROR - An error occurred: list index out of range
+2024-06-09 16:11:24,605 - ERROR - An error occurred: list index out of range
+2024-06-09 16:18:59,376 - ERROR - An error occurred: 'PTS'
+2024-06-09 16:20:47,098 - ERROR - An error occurred: 'PTS'
