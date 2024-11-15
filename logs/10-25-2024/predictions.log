@@ -1,0 +1,22 @@
+2024-10-25 11:13:28,202 - Prediction Result:
+YOUR DATA:
+  Point_Diff Result_enc LOC_encoded Opp_encoded    MP  FG%  3P%  FT%  TRB  AST  ... rolling_std_ast rolling_std_trb z_score_pts  z_score_ast  z_score_trb  rolling_mp  trend_mp  trend_pts  trend_ast  trend_trb
+0        6.5          0           0           1 32.20 0.48 0.35 0.79 4.50 7.50  ...            2.35            1.79       -0.22         0.21         0.17       32.20     26.90         20         11          3
+
+[1 rows x 28 columns]
+
+NEXT GAME:
+Prediction: Below Line
+
+
+2024-10-25 11:15:29,527 - Prediction Result:
+YOUR DATA:
+  Point_Diff Result_enc LOC_encoded Opp_encoded    MP  FG%  3P%  FT%  TRB  AST  ... rolling_std_ast rolling_std_trb z_score_pts  z_score_ast  z_score_trb  rolling_mp  trend_mp  trend_pts  trend_ast  trend_trb
+0        6.5          0           0           1 32.20 0.48 0.35 0.79 4.50 7.50  ...            2.35            1.79       -0.22         0.21         0.17       32.20     26.90         20         11          3
+
+[1 rows x 28 columns]
+
+NEXT GAME:
+Prediction: Below Line
+
+
