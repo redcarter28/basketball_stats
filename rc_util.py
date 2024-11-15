@@ -7,6 +7,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import pandas as pd
+import easygui
+
+service = None
+isSetup = False
 
 def setup():
     # Set up Chrome options
@@ -16,15 +20,17 @@ def setup():
     chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Set up the Chrome driver
-    service = ChromeService(executable_path="C:\\Users\\Abraham\\Documents\\C964\\chromedriver-win64\\chromedriver.exe")  # Update path to your ChromeDriver
+    service = ChromeService(executable_path='chromedriver-win64\\chromedriver.exe')  # Update path to your ChromeDriver
     driver = webdriver.Chrome(service=service, options=chrome_options)
     # Wait for the dropdown menu to be present
     wait = WebDriverWait(driver, 5)  # Increase timeout to desired seconds
+    isSetup = True
     return driver, wait
 
 def get_season_data(url, season_value):
     
-    driver, wait = setup()
+    if(not isSetup):
+        driver, wait = setup()
 
     driver.get(url)
 
@@ -84,7 +90,8 @@ def get_season_data(url, season_value):
 
 def get_prop_info(url):
 
-    driver, wait = setup()
+    if(not isSetup):
+        driver, wait = setup()
 
     # Fetch the webpage
     driver.get(url)
@@ -107,6 +114,7 @@ def get_prop_info(url):
             soup = BeautifulSoup(a_tag.get_attribute('outerHTML'), 'html.parser')
             spans = soup.find('span', class_='typography')
             prop_info = spans.get_text().split()[0]
+
             try: 
                 prop_info = float(prop_info)
             except Exception as e:
@@ -125,15 +133,18 @@ def get_prop_info(url):
 
 def get_upcoming_game(url):
 
-    driver, wait = setup()
+    if(not isSetup):
+        driver, wait = setup()
     
     driver.get(url)
 
-    game_url = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'flex participant-info__bottom-text')))
+    game_url = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.participant-info__matchup-link')))
+    href = game_url.get_attribute('href')
+    return href
 
 # Example usage
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023')
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
-print(get_prop_info('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/'))
+print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 
 

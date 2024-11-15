@@ -1,0 +1,3 @@
+https or numbers input for single player
+change menu to support multi player predictions
+automate preprocess
