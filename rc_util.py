@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import pandas as pd
 import datetime
+import player
 
 service = None
 isSetup = False
@@ -27,7 +28,7 @@ def setup():
     isSetup = True
     return driver, wait
 
-def get_season_data(url, season_value):
+def get_prop_history(url, season_value):
     
     if(not isSetup):
         driver, wait = setup()
@@ -75,7 +76,7 @@ def get_season_data(url, season_value):
                 df = pd.read_html(str(table))[0]
                 
                 # Display the DataFrame
-                return df
+                return df[['Date',  'Matchup', 'Prop Line']]
                 
                 # Optional: Save the DataFrame to a CSV file
                 #df.to_csv(f'output_{season_value}.csv', index=False)
@@ -178,11 +179,72 @@ def get_schedule(url):
 
     return 'shit brokey lmfao'
 
-print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
+def get_roster(team):
 
+    url = 'https://basketball-reference.com/teams/{0}/2025.html'.format(team)
+    if(not isSetup):
+        driver, wait = setup()
+    
+    driver.get(url)
 
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    driver.quit()
+
+    # Find the unique parent element that contains the table
+    table = soup.find('table', class_='stats_table')
+
+    if table:
+        df = pd.read_html(str(table))[0]
+
+    # Extract the player names and their hrefs
+    players = []
+    for tr in table.find('tbody').find_all('tr'):
+        player_cell = tr.find('td')  # Assuming the player name is in the first cell
+        if player_cell and player_cell.find('a'):
+            player_name = player_cell.find('a').get_text()
+            player_href = player_cell.find('a')['href']
+            players.append({'Player': player_name, 'Href': player_href})
+
+    # Create a DataFrame
+    df_players = pd.DataFrame(players)
+    return df_players
+
+def get_stats(url_path):
+    url = f'https://basketball-reference.com/{url_path}'
+    if not isSetup:
+        driver, wait = setup()
+
+    seasons = []
+
+    current_year = datetime.date.today().year
+
+    end_year = current_year - 5
+
+    for year in range(end_year, current_year):
+        driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        if soup.find('div', class_='assoc_game_log_summary') is None:
+            continue
+
+        # Find the unique parent element that contains the table
+        table = soup.find('table', class_='stats_table')
+
+        if table:
+            df = pd.read_html(str(table))[0]
+
+        seasons.append(df)
+
+    driver.quit()
+    return pd.concat(seasons)
+    
+
+#print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
+
+#print(get_stats('players/h/halibty01.html'))
+
+#print(get_roster('IND'))
 # Example usage
-#get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023')
+#print(get_prop_history('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023'))
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 

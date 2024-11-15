@@ -19,13 +19,11 @@ import rc_util
 
 pandas.options.display.float_format = '{:,.2f}'.format
 
-print(rc_util.get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023'))
-
 print('Intitializing...')
 
 #file_path = 'data/horford_reg_szn.csv'
 #file_path = 'data/t_haliburton_23-24_regszn.csv'
-file_path = easygui.fileopenbox()
+#file_path = easygui.fileopenbox()
 #file_path_t_haliburton_playoffs = 'data/t_haliburton_23-24_playoffs.csv'
 
 settings = {
@@ -157,6 +155,8 @@ def preprocess(file_path):
 
     df.fillna(0, inplace=True)
 
+    df = df.drop(df[df['GS'] != '1'].index, inplace=True)
+
     return df, label_encoders
 
 def display_label_encodings(label_encoder):
@@ -240,13 +240,13 @@ while True:
     if(user_input == ''):
         break
 
-#initialize preprocessing
+""" #initialize preprocessing
 try:
     set1, mappings = preprocess(file_path)
     
 except Exception as e:
     print(Fore.RED + f'Error during preprocessing: {e}')
-print(Fore.GREEN + f'Preprocessing complete of file: {file_path}\n')
+print(Fore.GREEN + f'Preprocessing complete of file: {file_path}\n') """
 
 #initialize logging service
 try:
@@ -310,7 +310,7 @@ def diagram_service():
 def ansi_cleaner(text):
     return re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]').sub('', text)
 
-avg_pts = set1['PTS'].mean()
+
 
 def train_model():
     try:
@@ -339,7 +339,7 @@ def train_model():
         error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
     print(Fore.LIGHTGREEN_EX + 'Data trained!')
 
-model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
+#model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
 #test data
 # new_data = pandas.DataFrame({
@@ -370,9 +370,10 @@ model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
 #INTERACTIVE QUERIES
 #MAIN LOOP FOR MODEL ANALYSIS
+os.system('cls')
 while(True):
     print(Fore.GREEN + 'Choose from the following options:\n')
-    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\nx - Quit\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\nx - Quit\n')
     os.system('cls')
     match data:
         case '1':
@@ -491,6 +492,9 @@ while(True):
             settings_menu()
         case '6':
             display_label_encodings(mappings)
+        case '7':
+            set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html'))
+            avg_pts = set1['PTS'].mean()
         case 'x':
             quit()
 
