@@ -142,9 +142,37 @@ def get_upcoming_game(url):
     href = game_url.get_attribute('href')
     return href
 
+def get_schedule(url):
+    
+    if(not isSetup):
+        driver, wait = setup()
+    
+    driver.get(url)
+
+    #schedule = driver.find_element(By.ID, 'schedule')
+
+     # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    driver.quit()
+
+    # Find the unique parent element that contains the table
+    schedule = soup.find('table', class_='stats_table')
+
+    if schedule:
+        # Convert the HTML table to a pandas DataFrame
+        df = pd.read_html(str(schedule))[0]
+        
+        # Display the DataFrame
+        return df
+
+    return schedule
+
+print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games.html'))
+
+
 # Example usage
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023')
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
-print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
+#print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 
 
