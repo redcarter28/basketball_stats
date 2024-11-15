@@ -26,6 +26,8 @@ def get_season_data(url, season_value):
     
     driver, wait = setup()
 
+    driver.get(url)
+
     try:
         # Locate the parent section containing the player card
         parent_section = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'section.player-game-log-card')))
@@ -105,6 +107,11 @@ def get_prop_info(url):
             soup = BeautifulSoup(a_tag.get_attribute('outerHTML'), 'html.parser')
             spans = soup.find('span', class_='typography')
             prop_info = spans.get_text().split()[0]
+            try: 
+                prop_info = float(prop_info)
+            except Exception as e:
+                prop_info = 0
+
 
             # Print the href and prop information
             #print(f"Href: {href}")
@@ -116,11 +123,17 @@ def get_prop_info(url):
         print(driver.page_source)  # Print the page source for debugging
         return 'fucken failed lmao'
 
+def get_upcoming_game(url):
 
+    driver, wait = setup()
+    
+    driver.get(url)
+
+    game_url = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'flex participant-info__bottom-text')))
 
 # Example usage
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023')
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
-print(get_prop_info('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
-# Close the browser
+print(get_prop_info('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/'))
+
 
