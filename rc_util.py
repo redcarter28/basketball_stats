@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import pandas as pd
-import easygui
+import datetime
 
 service = None
 isSetup = False
@@ -159,15 +159,26 @@ def get_schedule(url):
     schedule = soup.find('table', class_='stats_table')
 
     if schedule:
-        # Convert the HTML table to a pandas DataFrame
         df = pd.read_html(str(schedule))[0]
+    
+        # Ensure the 'Date' column is in datetime format (if it's not already)
+        df['Date'] = pd.to_datetime(df['Date'], format='%a, %b %d, %Y', errors='coerce')
         
-        # Display the DataFrame
+        # Get today's date
+        today = datetime.date.today()
+
+        # Filter the DataFrame to only include rows where the 'Date' is today's date
+        df = df[df['Date'].dt.date == today]
+
+        # Drop unncessary/empty columns
+        df = df.drop(columns=['Arena', 'Notes', 'LOG', 'Attend.']).dropna(how='all', axis='columns')
+        
+        # Display the filtered DataFrame
         return df
 
-    return schedule
+    return 'shit brokey lmfao'
 
-print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games.html'))
+print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
 
 
 # Example usage
