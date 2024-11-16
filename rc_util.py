@@ -235,8 +235,27 @@ def get_stats(url_path):
         seasons.append(df)
 
     driver.quit()
-    return pd.concat(seasons)
+
+    df1 = pd.concat(seasons)
+
+
+    return df
     
+def get_name(url_path):
+
+    url = f'https://basketball-reference.com/{url_path}'
+    if not isSetup:
+        driver, wait = setup()
+
+    driver.get(url)
+    
+    player_tab = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#meta')))
+    soup = BeautifulSoup(player_tab.get_attribute('outerHTML'), 'html.parser')
+    name = soup.find('span')
+
+    return name.get_text()
+
+
 
 #print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
 
@@ -245,6 +264,7 @@ def get_stats(url_path):
 #print(get_roster('IND'))
 # Example usage
 #print(get_prop_history('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2023'))
+print(get_name('players/h/halibty01.html'))
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 
