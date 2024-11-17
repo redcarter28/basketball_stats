@@ -68,10 +68,10 @@ def calculate_trend(series, window=5):
             trend.append(slope)
     return pandas.Series(trend, index=series.index)
 
-def preprocess(file_path):
+def preprocess(df):
     
     #read csv
-    df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
+    #df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
 
     #split the result and point diff from the W/L column
     df[['Result', 'Point_Diff']] = df['W/L'].str.extract(r'([WL])\s*\(([-+]?\d+)\)?')
@@ -373,7 +373,7 @@ def train_model():
 os.system('cls')
 while(True):
     print(Fore.GREEN + 'Choose from the following options:\n')
-    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\nx - Quit\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\n8 - Specify a Team\nx - Quit\n')
     os.system('cls')
     match data:
         case '1':
@@ -495,6 +495,13 @@ while(True):
         case '7':
             set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html'))
             avg_pts = set1['PTS'].mean()
+        case '8':
+            os.system('cls')
+            roster = rc_util.get_roster(input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n'))
+            os.system('cls')
+            print(roster)
+            input("Press any key to continue.")
+            os.system('cls')
         case 'x':
             quit()
 
