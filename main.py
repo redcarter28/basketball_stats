@@ -155,7 +155,8 @@ def preprocess(df):
 
     df.fillna(0, inplace=True)
 
-    df = df.drop(df[df['GS'] != '1'].index, inplace=True)
+    #uncomment to have games where start but right now this only causes problems
+    #df = df.drop(df[df['GS'] != '1'].index, inplace=True)
 
     return df, label_encoders
 
@@ -231,8 +232,6 @@ def setup_logging():
     prediction_logger.addHandler(prediction_handler)
     
     return error_logger, prediction_logger
-
-
 
 print(Fore.YELLOW + 'Welcome to the ML Basketball Tool!\nPress enter to get started!')
 while True:
@@ -339,6 +338,104 @@ def train_model():
         error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
     print(Fore.LIGHTGREEN_EX + 'Data trained!')
 
+
+def custom_query_menu(set1, model):
+    """
+    Method to handle custom query menu for entering future match's implied numbers.
+    Allows usage of 'avg' to calculate averages based on the previous 6 matches.
+    
+    Args:
+        set1 (pd.DataFrame): Dataset containing historical match data.
+        model: Trained prediction model.
+
+    Returns:
+        None
+    """
+    import os
+    import pandas as pd
+    from colorama import Fore
+
+    while True:
+        print("Enter a future match's implied numbers. If no specific implied value is known, enter 'avg' for the value, "
+              "and the algorithm will use the previous 6-match average.\n"
+              "See label mappings/documentation for an official list of codes and explanations.")
+        print("FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'")
+        print("EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5\n")
+        print("Enter your stats (or 'x' to return to the previous menu):")
+
+        data = input().split(',')
+        if data[0].strip().lower() == 'x':
+            os.system('cls')
+            break
+
+        # Strip and clean the input data
+        data = [item.strip() for item in data]
+
+        try:
+            # Initialize a new DataFrame
+            new_data = pd.DataFrame()
+            field_list = [
+                'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 
+                'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', 
+                '3pa_fga_ratio', 'PTS'
+            ]
+
+            # Populate DataFrame with user input or calculated averages
+            for i in range(len(data)):
+                if data[i].lower() == 'avg':
+                    new_data[field_list[i]] = [set1.iloc[:6][field_list[i]].mean()]
+                else:
+                    new_data[field_list[i]] = [float(data[i].strip('+'))]
+
+            # Add calculated ratios
+            new_data['rebounds_assists_ratio'] = [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()]
+            new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
+            new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
+
+            # Convert specific columns to float
+            for col in ['PTS', 'AST', 'TRB']:
+                new_data[col] = new_data[col].astype(float)
+
+            # Rolling statistics calculations
+            rolling_window = min(5, len(set1))
+            new_data['rolling_std_pts'] = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+            new_data['rolling_std_ast'] = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+            new_data['rolling_std_trb'] = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
+
+            # Calculate rolling mean and z-scores
+            rolling_mean_pts = set1['PTS'].rolling(window=5, min_periods=1).mean().iloc[-1]
+            rolling_std_pts = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+            new_data['z_score_pts'] = (new_data['PTS'] - rolling_mean_pts) / rolling_std_pts if rolling_std_pts != 0 else 0
+
+            rolling_mean_ast = set1['AST'].rolling(window=5, min_periods=1).mean().iloc[-1]
+            rolling_std_ast = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+            new_data['z_score_ast'] = (new_data['AST'] - rolling_mean_ast) / rolling_std_ast if rolling_std_ast != 0 else 0
+
+            rolling_mean_trb = set1['TRB'].rolling(window=5, min_periods=1).mean().iloc[-1]
+            rolling_std_trb = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
+            new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
+
+            new_data['rolling_mp'] = set1['MP'].rolling(window=5, min_periods=1).mean().iloc[-1]
+            new_data.fillna(0, inplace=True)
+
+            os.system('cls')
+
+            # Prediction using the model
+            next_game_prediction = model.predict(new_data)
+
+            # Display the results
+            your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
+            prediction_output = Fore.YELLOW + f'NEXT GAME:' + Fore.WHITE + f'\nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}'
+            print(your_data)
+            print(prediction_output)
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        input(Fore.WHITE + '\nPress any key to continue.')
+        os.system('cls')
+
+
 #model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
 #test data
@@ -398,6 +495,8 @@ while(True):
             print(Fore.YELLOW + 'Model re-trained')
             print(Fore.WHITE)
         case '4': #custom query menu
+            custom_query_menu(set1, model)
+            continue
             while(True):
                 print('Enter a future match\'s implied numbers. If no specific implied value is known, enter \'avg\' for the value and the algorithm will use the previous 6-match average. \nSee label mappings/documentation for official list of codes and explanations.')
                 #print('FORMAT: [Minutes Played], [Field Goal %], [3 Pointer %], [Free Throw %], [Rebounds], [Assists], \n[Steals], [Blocks], [Turnovers], [Points], [Opponent Code], [Home/Away (0 is home, 1 is away)], [Expected Win/Loss (0 L/ 1 W)], [Spread], [Expected over/under (0 Under/1 Over)]')
@@ -493,8 +592,11 @@ while(True):
         case '6':
             display_label_encodings(mappings)
         case '7':
+            os.system('cls')
             set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html'))
-            avg_pts = set1['PTS'].mean()
+            os.system('cls')
+            print(set1)
+            input("Press any key to continue.")
         case '8':
             os.system('cls')
             roster = rc_util.get_roster(input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n'))
@@ -504,22 +606,3 @@ while(True):
             os.system('cls')
         case 'x':
             quit()
-
-
-print(Fore.WHITE)
-quit()
-#new_data = set1.iloc[:6]
-
-#first_row = set2.head(1).copy()
-#print(set2.head(1))
-#ORIGINAL MODEL
-next_game_prediction = model.predict(new_data[X.columns])
-
-#print(np.mean(y_pred == y_test))
-
-print(f'NEXT GAME: \nPrediction: {"Above Line" if next_game_prediction[0] else "Below Line"}')
-
-print(new_data)
-#print(y_pred)
-#print(y_test)
-quit()

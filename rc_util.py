@@ -282,9 +282,13 @@ def get_stats(url_path):
     result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line'}, inplace=True)
 
     # add'l formatting
-    result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': int})
+    print(result.index)
+    result['Line'] = pd.to_numeric(result['Line'], errors='coerce')  # Convert non-numeric to NaN
+    result = result.dropna(subset=['Line'])  # Drop rows where 'Line' is NaN
 
-
+    result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': float})
+    
+    
     return result
     
     
@@ -359,5 +363,5 @@ def get_game_info(url):
 #print(get_stats('players/h/halibty01.html'))
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/al-horford/points/'))
-print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
+#print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
 
