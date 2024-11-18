@@ -10,6 +10,8 @@ import pandas as pd
 import datetime
 import os
 import warnings
+from tqdm import tqdm
+import unidecode
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
@@ -26,25 +28,30 @@ def setup():
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument('--log-level=3')
 
+    user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+    chrome_options.add_argument(f"--user-agent={user_agent}")
+
     # Set up the Chrome driver
     service = ChromeService(executable_path='chromedriver-win64\\chromedriver.exe')  # Update path to your ChromeDriver
     driver = webdriver.Chrome(service=service, options=chrome_options)
     # Wait for the dropdown menu to be present
-    wait = WebDriverWait(driver, 5)  # Increase timeout to desired seconds
+    wait = WebDriverWait(driver, 4)  # Increase timeout to desired seconds
     isSetup = True
     #pd.set_option('display.max_rows', 500)
     return driver, wait
 
 def get_prop_history(url):
     
+    url = url.replace('//', '/')
+
     if(not isSetup):
         driver, wait = setup()
 
     driver.get(url)
-
     seasons = []
 
-    for season_value in range(2023, 2025):
+    for year in range(2023, 2025):
+        print(f'Getting {year} prop history for {url}')
         try:
             # Locate the parent section containing the player card
             parent_section = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'section.player-game-log-card')))
@@ -58,7 +65,7 @@ def get_prop_history(url):
             dropdown_menu = wait.until(EC.visibility_of_element_located((By.ID, 'player-game-log-season-dropdown-menu')))
             
             # Select the season
-            season_option = dropdown_menu.find_element(By.XPATH, f".//li[@data-value='{season_value}']")
+            season_option = dropdown_menu.find_element(By.XPATH, f".//li[@data-value='{year}']")
             driver.execute_script("arguments[0].click();", season_option)
             
             # Wait for the table to update (adjust the sleep time if necessary)
@@ -94,8 +101,9 @@ def get_prop_history(url):
             else:
                 print(f"Table container not found")
         except Exception as e:
-            print(f"An error occurred: {e}")
-            print(driver.page_source)  # Print the page source for debugging
+            print(f"An error occurred during prop history lookup: \n{e}")
+            quit()
+            #print(driver.page_source)  # Print the page source for debugging
     return pd.concat(seasons)
 
 def get_prop_info(url):
@@ -139,7 +147,8 @@ def get_prop_info(url):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        print(driver.page_source)  # Print the page source for debugging
+        #print(driver.page_source)  # Print the page source for debugging
+        input('press enter to continue')
         return 'fucken failed lmao'
 
 def get_upcoming_game(url):
@@ -164,7 +173,6 @@ def get_schedule(url):
 
      # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    driver.quit()
 
     # Find the unique parent element that contains the table
     schedule = soup.find('table', class_='stats_table')
@@ -198,7 +206,7 @@ def get_roster(team):
     driver.get(url)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    driver.quit()
+    
 
     # Find the unique parent element that contains the table
     table = soup.find('table', class_='stats_table')
@@ -223,10 +231,11 @@ def get_roster(team):
     print(f'Got roster for {team}!')
     return df_players
 
-def get_stats(url_path):
-    print(f'Getting stats for {url_path}...')
-    url = f'https://basketball-reference.com{url_path}'
-    print(url)
+def get_stats(url_path, name):
+
+    url = f'https://basketball-reference.com/{url_path}'
+    url = url.replace('//', '/')
+    print(f'Getting stats for {url}')
     if not isSetup:
         driver, wait = setup()
 
@@ -237,9 +246,11 @@ def get_stats(url_path):
     old_year = current_year - 1
 
     for year in range(2024, 2026):
+        print(f'Fetching game stats for {year}')
         driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         if soup.find('div', class_='assoc_game_log_summary') is None:
+            print('No game data for this year, skipping...')
             continue
 
         # Find the unique parent element that contains the table
@@ -253,23 +264,21 @@ def get_stats(url_path):
     
 
     # first stat set
-    
-    for i in seasons:
-        print(i)
-
-    input('test')
 
     df1 = pd.concat(seasons)
     
     #second stat set 
 
-    name = get_name(url_path).lower().split()
+    name = '-'.join(unidecode.unidecode(name).lower().split())
+    url2 = f'https://www.bettingpros.com/nba/props/{name}/points/'
 
-    df2 = get_prop_history(f'https://www.bettingpros.com/nba/props/{'-'.join(name)}/points/')
+    #print(url2)
+    #input(name)
+    df2 = get_prop_history(url2)
 
     #print(df1)
 
-    driver.quit()
+   
 
     # Remove break rows
     df1 = df1[df1['Date'] != 'Date']
@@ -366,13 +375,13 @@ def get_game_info(url):
         print(f"Error: {e}")
 
     finally:
-        driver.quit()
-    
+        #driver.quit()
+        pass
     return odds_dict
 
 #print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
 
-#print(get_stats('players/h/halibty01.html'))
+#print(get_stats('/players/h/halibty01.html', 'Tyrese Haliburton'))
 
 #print(get_roster('IND'))
 # Example usage
@@ -381,4 +390,4 @@ def get_game_info(url):
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/al-horford/points/'))
 #print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
-
+#print(get_prop_info('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))

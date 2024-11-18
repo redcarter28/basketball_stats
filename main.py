@@ -463,6 +463,10 @@ def the_algo(roster, team_code):
         print(Fore.GREEN + f'Preprocessing complete of path: {row[1]}\n') 
         print(Fore.WHITE)
         
+
+        #model, X_train, X_test, y_train, y_test, y_pred, X, y
+        model = train_model(stats)
+
         temp_player = player.Player(
             #name
             row[0],     
@@ -471,10 +475,11 @@ def the_algo(roster, team_code):
             #team code
             team_code,  
             #model
-            train_model(stats), 
+            model, 
             #stats
             stats           
         )
+
         print(temp_player.model)
     
 
@@ -639,7 +644,7 @@ while(True):
             display_label_encodings(mappings)
         case '7':
             os.system('cls')
-            set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html'))
+            set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html', 'Tyrese Haliburton'))
             set1.rename({'Date_x':'Date'}, inplace=True)
             os.system('cls')
             print(set1)
