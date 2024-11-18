@@ -301,7 +301,7 @@ def diagram_service():
             case '5':
                 os.system('cls')
                 display_set1 = set1.copy()
-                #display_set1['Date'] = pandas.to_datetime(display_set1['Date'], unit='s')
+                display_set1['Date'] = pandas.to_datetime(display_set1['Date'], unit='s')
                 print(display_set1)
                 input('\nPress any key to continue.')
                 os.system('cls')
@@ -342,13 +342,13 @@ def train_model(set1):
         error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
     print(Fore.LIGHTGREEN_EX + 'Data trained!')
 
-def predict():
+def predict(data):
     # Strip and clean the input data
     data = [item.strip() for item in data]
 
     try:
         # Initialize a new DataFrame
-        new_data = pd.DataFrame()
+        new_data = pandas.DataFrame()
         field_list = [
             'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 
             'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', 
@@ -647,8 +647,7 @@ while(True):
             set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html', 'Tyrese Haliburton'))
             set1.rename({'Date_x':'Date'}, inplace=True)
             os.system('cls')
-            print(set1)
-            input("Press any key to continue.")
+            
         case '8':
             os.system('cls')
             team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
