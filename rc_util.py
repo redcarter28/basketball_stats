@@ -9,6 +9,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import datetime
 import os
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
 
 service = None
 isSetup = False
@@ -20,6 +24,7 @@ def setup():
     chrome_options.add_argument("--headless")  # Run in headless mode
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument('--log-level=3')
 
     # Set up the Chrome driver
     service = ChromeService(executable_path='chromedriver-win64\\chromedriver.exe')  # Update path to your ChromeDriver
@@ -94,7 +99,7 @@ def get_prop_history(url):
     return pd.concat(seasons)
 
 def get_prop_info(url):
-
+    print(f'Getting prop info for {url}...')
     if(not isSetup):
         driver, wait = setup()
 
@@ -129,6 +134,7 @@ def get_prop_info(url):
             # Print the href and prop information
             #print(f"Href: {href}")
             output.append(prop_info)
+        print(f'Got prop info for {url}!')
         return output
 
     except Exception as e:
@@ -184,7 +190,7 @@ def get_schedule(url):
     return 'shit brokey lmfao'
 
 def get_roster(team):
-
+    print(f'Getting roster for {team}...')
     url = 'https://basketball-reference.com/teams/{0}/2025.html'.format(team)
     if(not isSetup):
         driver, wait = setup()
@@ -214,10 +220,13 @@ def get_roster(team):
 
     os.system('cls')
     
+    print(f'Got roster for {team}!')
     return df_players
 
 def get_stats(url_path):
-    url = f'https://basketball-reference.com/{url_path}'
+    print(f'Getting stats for {url_path}...')
+    url = f'https://basketball-reference.com{url_path}'
+    print(url)
     if not isSetup:
         driver, wait = setup()
 
@@ -244,6 +253,12 @@ def get_stats(url_path):
     
 
     # first stat set
+    
+    for i in seasons:
+        print(i)
+
+    input('test')
+
     df1 = pd.concat(seasons)
     
     #second stat set 
@@ -282,13 +297,15 @@ def get_stats(url_path):
     result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line'}, inplace=True)
 
     # add'l formatting
-    print(result.index)
+    #print(result.index)
     result['Line'] = pd.to_numeric(result['Line'], errors='coerce')  # Convert non-numeric to NaN
     result = result.dropna(subset=['Line'])  # Drop rows where 'Line' is NaN
 
     result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': float})
+    result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line', 'Date_x':'Date'}, inplace=True)
     
-    
+
+    print(f'Got stats for {url_path}!')
     return result
     
     

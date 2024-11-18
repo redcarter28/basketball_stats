@@ -14,6 +14,8 @@ from datetime import datetime
 import traceback
 import easygui
 import rc_util
+import player
+import unidecode
 
 #import numpy as np
 
@@ -33,6 +35,7 @@ settings = {
     'random_state': 42
 }
 
+mappings = None
 
 #set1 = pandas.read_csv(file_path_t_haliburton_regszn, parse_dates=['Date'], dtype={'G': str})
 #set2 = pandas.read_csv(file_path_t_haliburton_playoffs, parse_dates=['Date'], dtype={'G': str})
@@ -70,6 +73,8 @@ def calculate_trend(series, window=5):
 
 def preprocess(df):
     
+    print('Starting preprocessing...')
+
     #read csv
     #df = pandas.read_csv(file_path, parse_dates=['Date'], dtype={'MP': str})
 
@@ -296,7 +301,7 @@ def diagram_service():
             case '5':
                 os.system('cls')
                 display_set1 = set1.copy()
-                display_set1['Date'] = pandas.to_datetime(display_set1['Date'], unit='s')
+                #display_set1['Date'] = pandas.to_datetime(display_set1['Date'], unit='s')
                 print(display_set1)
                 input('\nPress any key to continue.')
                 os.system('cls')
@@ -310,8 +315,7 @@ def ansi_cleaner(text):
     return re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]').sub('', text)
 
 
-
-def train_model():
+def train_model(set1):
     try:
         # model creation
         X = set1[['Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS', 'rolling_std_pts', 'rolling_std_ast', 'rolling_std_trb', 'z_score_pts', 'z_score_ast', 'z_score_trb', 'rolling_mp', 'trend_mp', 'trend_pts', 'trend_ast', 'trend_trb']]
@@ -337,6 +341,77 @@ def train_model():
         print(Fore.RED + f"Error during model training: {e}")
         error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
     print(Fore.LIGHTGREEN_EX + 'Data trained!')
+
+def predict():
+    # Strip and clean the input data
+    data = [item.strip() for item in data]
+
+    try:
+        # Initialize a new DataFrame
+        new_data = pd.DataFrame()
+        field_list = [
+            'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 
+            'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', 
+            '3pa_fga_ratio', 'PTS'
+        ]
+
+        # Populate DataFrame with user input or calculated averages
+        for i in range(len(data)):
+            if data[i].lower() == 'avg':
+                new_data[field_list[i]] = [set1.iloc[:6][field_list[i]].mean()]
+            else:
+                new_data[field_list[i]] = [float(data[i].strip('+'))]
+
+        # Add calculated ratios
+        new_data['rebounds_assists_ratio'] = [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()]
+        new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
+        new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
+
+        # Convert specific columns to float
+        for col in ['PTS', 'AST', 'TRB']:
+            new_data[col] = new_data[col].astype(float)
+
+        # Rolling statistics calculations
+        rolling_window = min(5, len(set1))
+        new_data['rolling_std_pts'] = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+        new_data['rolling_std_ast'] = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+        new_data['rolling_std_trb'] = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
+
+        # Calculate rolling mean and z-scores
+        rolling_mean_pts = set1['PTS'].rolling(window=5, min_periods=1).mean().iloc[-1]
+        rolling_std_pts = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
+        new_data['z_score_pts'] = (new_data['PTS'] - rolling_mean_pts) / rolling_std_pts if rolling_std_pts != 0 else 0
+
+        rolling_mean_ast = set1['AST'].rolling(window=5, min_periods=1).mean().iloc[-1]
+        rolling_std_ast = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
+        new_data['z_score_ast'] = (new_data['AST'] - rolling_mean_ast) / rolling_std_ast if rolling_std_ast != 0 else 0
+
+        rolling_mean_trb = set1['TRB'].rolling(window=5, min_periods=1).mean().iloc[-1]
+        rolling_std_trb = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
+        new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
+
+        new_data['rolling_mp'] = set1['MP'].rolling(window=5, min_periods=1).mean().iloc[-1]
+        
+        new_data['trend_mp'] = set1['MP']
+        new_data['trend_pts'] = set1['PTS']
+        new_data['trend_ast'] = set1['AST']
+        new_data['trend_trb'] = set1['TRB']
+        
+        new_data.fillna(0, inplace=True)
+
+        os.system('cls')
+
+        # Prediction using the model
+        next_game_prediction = model.predict(new_data)
+
+        # Display the results
+        your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
+        prediction_output = Fore.YELLOW + f'NEXT GAME:' + Fore.WHITE + f'\nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}'
+        #print(your_data)
+        return(prediction_output)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def custom_query_menu(set1, model):
@@ -368,72 +443,43 @@ def custom_query_menu(set1, model):
             os.system('cls')
             break
 
-        # Strip and clean the input data
-        data = [item.strip() for item in data]
-
-        try:
-            # Initialize a new DataFrame
-            new_data = pd.DataFrame()
-            field_list = [
-                'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 
-                'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', 
-                '3pa_fga_ratio', 'PTS'
-            ]
-
-            # Populate DataFrame with user input or calculated averages
-            for i in range(len(data)):
-                if data[i].lower() == 'avg':
-                    new_data[field_list[i]] = [set1.iloc[:6][field_list[i]].mean()]
-                else:
-                    new_data[field_list[i]] = [float(data[i].strip('+'))]
-
-            # Add calculated ratios
-            new_data['rebounds_assists_ratio'] = [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()]
-            new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
-            new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
-
-            # Convert specific columns to float
-            for col in ['PTS', 'AST', 'TRB']:
-                new_data[col] = new_data[col].astype(float)
-
-            # Rolling statistics calculations
-            rolling_window = min(5, len(set1))
-            new_data['rolling_std_pts'] = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
-            new_data['rolling_std_ast'] = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
-            new_data['rolling_std_trb'] = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
-
-            # Calculate rolling mean and z-scores
-            rolling_mean_pts = set1['PTS'].rolling(window=5, min_periods=1).mean().iloc[-1]
-            rolling_std_pts = set1['PTS'].rolling(window=5, min_periods=1).std().iloc[-1]
-            new_data['z_score_pts'] = (new_data['PTS'] - rolling_mean_pts) / rolling_std_pts if rolling_std_pts != 0 else 0
-
-            rolling_mean_ast = set1['AST'].rolling(window=5, min_periods=1).mean().iloc[-1]
-            rolling_std_ast = set1['AST'].rolling(window=5, min_periods=1).std().iloc[-1]
-            new_data['z_score_ast'] = (new_data['AST'] - rolling_mean_ast) / rolling_std_ast if rolling_std_ast != 0 else 0
-
-            rolling_mean_trb = set1['TRB'].rolling(window=5, min_periods=1).mean().iloc[-1]
-            rolling_std_trb = set1['TRB'].rolling(window=5, min_periods=1).std().iloc[-1]
-            new_data['z_score_trb'] = (new_data['TRB'] - rolling_mean_trb) / rolling_std_trb if rolling_std_trb != 0 else 0
-
-            new_data['rolling_mp'] = set1['MP'].rolling(window=5, min_periods=1).mean().iloc[-1]
-            new_data.fillna(0, inplace=True)
-
-            os.system('cls')
-
-            # Prediction using the model
-            next_game_prediction = model.predict(new_data)
-
-            # Display the results
-            your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
-            prediction_output = Fore.YELLOW + f'NEXT GAME:' + Fore.WHITE + f'\nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}'
-            print(your_data)
-            print(prediction_output)
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        print(predict(data))
 
         input(Fore.WHITE + '\nPress any key to continue.')
         os.system('cls')
+
+def the_algo(roster, team_code):
+    players = []
+
+    for index, row in roster.iterrows():
+        
+        try:
+            stats, mappings = preprocess(rc_util.get_stats(row[1]))
+            
+        except Exception as e:
+            print(Fore.RED + f'Error during preprocessing: {e}')
+            print(Fore.WHITE)
+            continue
+        print(Fore.GREEN + f'Preprocessing complete of path: {row[1]}\n') 
+        print(Fore.WHITE)
+        
+        temp_player = player.Player(
+            #name
+            row[0],     
+            #props
+            rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{'-'.join(row[0].split())}/points/'),      
+            #team code
+            team_code,  
+            #model
+            train_model(stats), 
+            #stats
+            stats           
+        )
+        print(temp_player.model)
+    
+
+
+    return players
 
 
 #model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
@@ -491,7 +537,7 @@ while(True):
             os.system('cls')
         case '3':
             os.system('cls')
-            model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model()
+            model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model(set1)
             print(Fore.YELLOW + 'Model re-trained')
             print(Fore.WHITE)
         case '4': #custom query menu
@@ -594,15 +640,18 @@ while(True):
         case '7':
             os.system('cls')
             set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html'))
+            set1.rename({'Date_x':'Date'}, inplace=True)
             os.system('cls')
             print(set1)
             input("Press any key to continue.")
         case '8':
             os.system('cls')
-            roster = rc_util.get_roster(input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n'))
-            os.system('cls')
-            print(roster)
-            input("Press any key to continue.")
+            team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
+            roster = rc_util.get_roster(team_code)
+            players = (the_algo(roster, team_code))
+            #print(players[0][0], '\n', players[0][1])
+
+            input("\nPress any key to continue.")
             os.system('cls')
         case 'x':
             quit()
