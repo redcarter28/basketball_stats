@@ -515,6 +515,17 @@ def the_algo(roster, team_code):
 
     return players
 
+def roster_picker(roster):
+    while(True):
+        os.system('cls')
+        print(Fore.LIGHTGREEN_EX + 'Choose a player to analyze:\n' + Fore.WHITE)
+        print(roster + '\n')
+        pick = int(input('Enter the row number: '))
+            
+        return [roster.iloc[pick]['Player'], roster.iloc[pick]['Href']]
+
+
+
 
 #model, X_train, X_test, y_train, y_test, y_pred, X, y  = train_model()
 
@@ -551,15 +562,17 @@ os.system('cls')
 
 current_model = 'None'
 trained = False
+saved_roster = 'None'
 
 while(True):
     
 
     print(Fore.LIGHTBLUE_EX + 'Current Model Selected: ' + Fore.WHITE + f'{current_model}')
     print(Fore.LIGHTBLUE_EX + 'Model Trained: ' + Fore.WHITE + f'{trained}\n')
+    print(Fore.LIGHTCYAN_EX + 'Basketball Roster Loaded: ' + Fore.WHITE + f'{saved_roster}\n')
 
     print(Fore.GREEN + 'Choose from the following options:\n')
-    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\n8 - Specify a Team\n9 - Predict whole team O/U\nx - Quit\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Pull selected player data\n8 - Specify a Team\n9 - Predict whole team O/U\nx - Quit\n')
     os.system('cls')
     match data:
         case '1':
@@ -608,12 +621,8 @@ while(True):
             props = rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
             print('Got prop info!')
 
-            print(props)
-            input('\ntest\n')
-
             holder = [game_info[team_code], result, loc, opp_code, 'avg', 'avg', 'avg', 'avg', props[2], props[1], props[4], props[5], 'avg', 'avg', 'avg', 'avg', props[0]]
-            print(holder)
-            input('test')
+        
             print(predict(holder))
             continue
             custom_query_menu(set1, model)
@@ -714,9 +723,8 @@ while(True):
             display_label_encodings(mappings)
         case '7':
             os.system('cls')
-            player_name = input('Input player name exactly as it appears officially: \n')
-            link = input('Input bbref link of player starting with \'player\': \n')
-            team_code = input('Input the 3 letter code of the team they play for: \n')
+            player_name = current_model
+            link = href
             set1, mappings = preprocess(rc_util.get_stats(link, player_name))
             current_model = player_name
             set1.rename({'Date_x':'Date'}, inplace=True)
@@ -727,8 +735,16 @@ while(True):
             
             team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
             num_guys = int(input('Enter the number of players on the team to request (based off of order of roster on bbref.com): \n'))
-            current_model = team_code
-            roster = rc_util.get_roster(team_code, num_guys)
+            
+            if saved_roster == 'None':
+                roster = rc_util.get_roster(team_code, num_guys)
+
+            picked = roster_picker(roster)
+            current_model = picked[0]
+            href = picked[1]
+
+
+            continue
             players = (the_algo(roster, team_code))
             trained = True
 
@@ -744,6 +760,6 @@ while(True):
             if not trained and not current_model == 'team':
                 print(Fore.LIGHTRED_EX + "Train a model on a team first!\n" + Fore.WHITE)
                 continue
-            predict_team(players)
+            #predict_team(players)
         case 'x':
             quit()
