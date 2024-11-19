@@ -322,7 +322,7 @@ def train_model(set1):
         #X = set1.drop(columns=['Line'])
         y = set1['above_line'].astype(int)
 
-        os.system('cls')
+        
 
         #create train and test objects from the train_test_split method according to settings paramters
         #default test_size is 0.2, meaning %20 of the data is reserved for test cases and the rest for training data
@@ -337,13 +337,19 @@ def train_model(set1):
         y_pred = model.predict(X_test)
 
         return model, X_train, X_test, y_train, y_test, y_pred, X, y
+    
     except Exception as e:
         print(Fore.RED + f"Error during model training: {e}")
         error_logger.error(ansi_cleaner(f"An error occurred: {str(e)}"))
-    print(Fore.LIGHTGREEN_EX + 'Data trained!')
+    finally:
+        print(Fore.LIGHTGREEN_EX + 'Data trained!' + Fore.WHITE)
+    
 
 def predict(data):
     # Strip and clean the input data
+
+    data = [str(item) for item in data]
+
     data = [item.strip() for item in data]
 
     try:
@@ -411,8 +417,20 @@ def predict(data):
         return(prediction_output)
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred during prediction: {e}")
 
+def accuracy_service(y_test, y_pred):
+    print(Fore.YELLOW + f'This report was generated with a test_size of {settings["test_size"]}, meaning %{str(settings["test_size"]).split('.')[1] + '0'} of the data was reserved for test cases and the rest is used for training.\n')
+    accuracy = accuracy_score(y_test, y_pred)
+    print(Fore.WHITE + f'Accuracy: {accuracy:.2f}')
+
+    print('Classification Report:')
+    print(classification_report(y_test, y_pred))
+
+    print('Confusion Matrix:')
+    print(confusion_matrix(y_test, y_pred))
+    data = input('\nPress any key to exit!')
+    return
 
 def custom_query_menu(set1, model):
     """
@@ -448,13 +466,25 @@ def custom_query_menu(set1, model):
         input(Fore.WHITE + '\nPress any key to continue.')
         os.system('cls')
 
+def predict_team(players):
+    os.system('cls')
+    for dude in players:
+                dude.accuracy_service(settings['test_size'])
+    input('\n press to continue')
+    pass
+
+
+
+
 def the_algo(roster, team_code):
     players = []
 
     for index, row in roster.iterrows():
         
         try:
-            stats, mappings = preprocess(rc_util.get_stats(row[1]))
+            player_name = unidecode.unidecode(row[0]).lower()
+            print(f'Player Name: {player_name}')
+            stats, mappings = preprocess(rc_util.get_stats(row[1], player_name))
             
         except Exception as e:
             print(Fore.RED + f'Error during preprocessing: {e}')
@@ -465,24 +495,23 @@ def the_algo(roster, team_code):
         
 
         #model, X_train, X_test, y_train, y_test, y_pred, X, y
-        model = train_model(stats)
+        model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model(stats)
+        
 
         temp_player = player.Player(
             #name
             row[0],     
             #props
-            rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{'-'.join(row[0].split())}/points/'),      
+            rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{'-'.join(player_name.split())}/points/'),      
             #team code
             team_code,  
             #model
             model, 
             #stats
-            stats           
+            stats,
+            y_test,
+            y_pred           
         )
-
-        print(temp_player.model)
-    
-
 
     return players
 
@@ -519,33 +548,74 @@ def the_algo(roster, team_code):
 #INTERACTIVE QUERIES
 #MAIN LOOP FOR MODEL ANALYSIS
 os.system('cls')
+
+current_model = 'None'
+trained = False
+
 while(True):
+    
+
+    print(Fore.LIGHTBLUE_EX + 'Current Model Selected: ' + Fore.WHITE + f'{current_model}')
+    print(Fore.LIGHTBLUE_EX + 'Model Trained: ' + Fore.WHITE + f'{trained}\n')
+
     print(Fore.GREEN + 'Choose from the following options:\n')
-    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\n8 - Specify a Team\nx - Quit\n')
+    data = input(Fore.WHITE + '1 - Visualizations Dashboard\n2 - Accuracy/Classification Report for backtested data\n3 - Re-train the model\n4 - Enter custom query to predict a future match\n5 - Settings\n6 - Label Mappings\n7 - Specify a Player\n8 - Specify a Team\n9 - Predict whole team O/U\nx - Quit\n')
     os.system('cls')
     match data:
         case '1':
             diagram_service()
         case '2':
+            if not trained:
+                print(Fore.LIGHTRED_EX + "Train a model first!\n" + Fore.WHITE)
+                continue
+
             # evaluate
             os.system('cls')
-            print(Fore.YELLOW + f'This report was generated with a test_size of {settings["test_size"]}, meaning %{str(settings["test_size"]).split('.')[1] + '0'} of the data was reserved for test cases and the rest is used for training.\n')
-            accuracy = accuracy_score(y_test, y_pred)
-            print(Fore.WHITE + f'Accuracy: {accuracy:.2f}')
-
-            print('Classification Report:')
-            print(classification_report(y_test, y_pred))
-
-            print('Confusion Matrix:')
-            print(confusion_matrix(y_test, y_pred))
-            data = input('\nPress any key to exit!')
+            accuracy_service(y_test, y_pred)
             os.system('cls')
         case '3':
             os.system('cls')
             model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model(set1)
-            print(Fore.YELLOW + 'Model re-trained')
+            #print(Fore.YELLOW + 'Model re-trained')
+            trained = True
             print(Fore.WHITE)
         case '4': #custom query menu
+            #"FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'
+            #EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5
+
+            link_bit = '-'.join(current_model.split())
+            upcoming_game = rc_util.get_upcoming_game(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
+            game_info = rc_util.get_game_info(upcoming_game)
+            for key in game_info.keys():
+                if game_info[key] != team_code:
+                    opp = game_info[key]
+                    break
+
+            if(game_info[team_code][:1] == '+'):
+                result = '0'
+            else:
+                result = '1'
+
+            if(list(game_info.keys())[1] == team_code):
+                loc = '0'
+            else:
+                loc = '1'
+
+            opp_code = input('Enter opponent code from list: \n')
+
+
+            
+            props = rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
+            print('Got prop info!')
+
+            print(props)
+            input('\ntest\n')
+
+            holder = [game_info[team_code], result, loc, opp_code, 'avg', 'avg', 'avg', 'avg', props[2], props[1], props[4], props[5], 'avg', 'avg', 'avg', 'avg', props[0]]
+            print(holder)
+            input('test')
+            print(predict(holder))
+            continue
             custom_query_menu(set1, model)
             continue
             while(True):
@@ -644,18 +714,36 @@ while(True):
             display_label_encodings(mappings)
         case '7':
             os.system('cls')
-            set1, mappings = preprocess(rc_util.get_stats('players/h/halibty01.html', 'Tyrese Haliburton'))
+            player_name = input('Input player name exactly as it appears officially: \n')
+            link = input('Input bbref link of player starting with \'player\': \n')
+            team_code = input('Input the 3 letter code of the team they play for: \n')
+            set1, mappings = preprocess(rc_util.get_stats(link, player_name))
+            current_model = player_name
             set1.rename({'Date_x':'Date'}, inplace=True)
             os.system('cls')
             
         case '8':
             os.system('cls')
+            
             team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
-            roster = rc_util.get_roster(team_code)
+            num_guys = int(input('Enter the number of players on the team to request (based off of order of roster on bbref.com): \n'))
+            current_model = team_code
+            roster = rc_util.get_roster(team_code, num_guys)
             players = (the_algo(roster, team_code))
-            #print(players[0][0], '\n', players[0][1])
+            trained = True
+
+            os.system('cls')
+
+            for dude in players:
+                print(f'Player Name: {dude.name}')
+                print(f'Player Model: \n{accuracy_service(dude.y_test, dude.y_pred)}')
 
             input("\nPress any key to continue.")
             os.system('cls')
+        case '9':
+            if not trained and not current_model == 'team':
+                print(Fore.LIGHTRED_EX + "Train a model on a team first!\n" + Fore.WHITE)
+                continue
+            predict_team(players)
         case 'x':
             quit()

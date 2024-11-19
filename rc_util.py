@@ -197,7 +197,7 @@ def get_schedule(url):
 
     return 'shit brokey lmfao'
 
-def get_roster(team):
+def get_roster(team, num_guys):
     print(f'Getting roster for {team}...')
     url = 'https://basketball-reference.com/teams/{0}/2025.html'.format(team)
     if(not isSetup):
@@ -229,7 +229,7 @@ def get_roster(team):
     os.system('cls')
     
     print(f'Got roster for {team}!')
-    return df_players
+    return df_players.iloc[:num_guys]
 
 def get_stats(url_path, name):
 
@@ -338,11 +338,11 @@ def get_game_info(url):
     
     try:
         # Set the window size to a smaller width for dynamic rendering
-        driver.set_window_size(1200, 400)
+        driver.set_window_size(200, 200)
         driver.get(url)
 
         # Wait for the container to be visible
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 5)
         container = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.flex.game-odds-module__content")))
 
         # Parse the page source using BeautifulSoup
@@ -383,11 +383,11 @@ def get_game_info(url):
 
 #print(get_stats('/players/h/halibty01.html', 'Tyrese Haliburton'))
 
-#print(get_roster('IND'))
+#print(get_roster('IND', 5))
 # Example usage
 #print(get_prop_history('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 #print(get_stats('players/h/halibty01.html'))
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
-#print(get_upcoming_game('https://www.bettingpros.com/nba/props/al-horford/points/'))
+#print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 #print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
 #print(get_prop_info('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
