@@ -535,6 +535,11 @@ def roster_picker(roster):
         print(roster)
         pick = int(input('Enter the row number: '))
             
+        if(pick == ''):
+            print(Fore.LIGHTRED_EX + 'Input cannot be empty, try again' + Fore.WHITE)
+            input('Press any key to continue')
+            continue
+
         return [roster.iloc[pick]['Player'].replace('.', ''), roster.iloc[pick]['Href']]
 
 
@@ -742,8 +747,13 @@ while(True):
             player_name = current_model
             link = href[1:]
             set1, mappings = preprocess(rc_util.get_stats(link, player_name))
+
+            
+
             current_model = player_name
             set1.rename({'Date_x':'Date'}, inplace=True)
+
+            set1.to_excel(f'output_{current_model}.xlsx', index=False)
 
             os.system('cls')
             
