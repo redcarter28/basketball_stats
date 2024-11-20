@@ -333,6 +333,7 @@ def get_name(url_path):
     return name.get_text()
 
 def get_game_info(url):
+    print(f'Getting game info for {url}')
     if not isSetup:
         driver, wait = setup()
     
@@ -390,4 +391,4 @@ def get_game_info(url):
 #get_season_data('https://www.bettingpros.com/nba/props/dereck-lively-ii/points/', '2024')
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 #print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
-#print(get_prop_info('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
+#print(get_prop_info('https://www.bettingpros.com/nba/props/jamal-murray/points/'))

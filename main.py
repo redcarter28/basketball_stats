@@ -16,6 +16,7 @@ import easygui
 import rc_util
 import player
 import unidecode
+import traceback
 
 #import numpy as np
 
@@ -352,6 +353,9 @@ def predict(data):
 
     data = [item.strip() for item in data]
 
+    print(data)
+
+
     try:
         # Initialize a new DataFrame
         new_data = pandas.DataFrame()
@@ -361,6 +365,15 @@ def predict(data):
             '3pa_fga_ratio', 'PTS'
         ]
 
+        for i in range(0, len(field_list)):
+            new_data[field_list[i]] = data[i]
+
+
+        # Convert specific columns to float
+        for col in ['PTS', 'AST', 'TRB']:
+            new_data[col] = new_data[col].astype(float)
+
+        
         # Populate DataFrame with user input or calculated averages
         for i in range(len(data)):
             if data[i].lower() == 'avg':
@@ -368,14 +381,13 @@ def predict(data):
             else:
                 new_data[field_list[i]] = [float(data[i].strip('+'))]
 
+        
         # Add calculated ratios
         new_data['rebounds_assists_ratio'] = [set1.iloc[:6]['TRB'].mean() / set1.iloc[:6]['AST'].mean()]
         new_data['pts_reb+ast_ratio'] = [set1.iloc[:6]['PTS'].mean() / (set1.iloc[:6]['TRB'].mean() + set1.iloc[:6]['AST'].mean())]
         new_data['3pa_fga_ratio'] = [set1.iloc[:6]['3PA'].mean() / (set1.iloc[:6]['FGA'].mean() - set1.iloc[:6]['3PA'].mean())]
 
-        # Convert specific columns to float
-        for col in ['PTS', 'AST', 'TRB']:
-            new_data[col] = new_data[col].astype(float)
+        
 
         # Rolling statistics calculations
         rolling_window = min(5, len(set1))
@@ -402,7 +414,7 @@ def predict(data):
         new_data['trend_pts'] = set1['PTS']
         new_data['trend_ast'] = set1['AST']
         new_data['trend_trb'] = set1['TRB']
-        
+        print('canary')
         new_data.fillna(0, inplace=True)
 
         os.system('cls')
@@ -418,6 +430,7 @@ def predict(data):
 
     except Exception as e:
         print(f"An error occurred during prediction: {e}")
+        print(traceback.format_exc())
 
 def accuracy_service(y_test, y_pred):
     print(Fore.YELLOW + f'This report was generated with a test_size of {settings["test_size"]}, meaning %{str(settings["test_size"]).split('.')[1] + '0'} of the data was reserved for test cases and the rest is used for training.\n')
@@ -518,11 +531,11 @@ def the_algo(roster, team_code):
 def roster_picker(roster):
     while(True):
         os.system('cls')
-        print(Fore.LIGHTGREEN_EX + 'Choose a player to analyze:\n' + Fore.WHITE)
-        print(roster + '\n')
+        print(Fore.LIGHTGREEN_EX + 'Choose a player to analyze: ' + Fore.WHITE)
+        print(roster)
         pick = int(input('Enter the row number: '))
             
-        return [roster.iloc[pick]['Player'], roster.iloc[pick]['Href']]
+        return [roster.iloc[pick]['Player'].replace('.', ''), roster.iloc[pick]['Href']]
 
 
 
@@ -596,6 +609,10 @@ while(True):
             #"FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'
             #EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5
 
+            if not trained:
+                print(Fore.LIGHTRED_EX + "Train a model first!\n" + Fore.WHITE)
+                continue
+
             link_bit = '-'.join(current_model.split())
             upcoming_game = rc_util.get_upcoming_game(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
             game_info = rc_util.get_game_info(upcoming_game)
@@ -621,8 +638,7 @@ while(True):
             props = rc_util.get_prop_info(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
             print('Got prop info!')
 
-            holder = [game_info[team_code], result, loc, opp_code, 'avg', 'avg', 'avg', 'avg', props[2], props[1], props[4], props[5], 'avg', 'avg', 'avg', 'avg', props[0]]
-        
+            holder = [game_info[team_code], result, loc, opp_code, 'avg', 'avg', 'avg', 'avg', str(props[2]), str(props[1]), str(props[4]), str(props[5]), 'avg', 'avg', 'avg', 'avg', str(props[0])]
             print(predict(holder))
             continue
             custom_query_menu(set1, model)
@@ -724,24 +740,25 @@ while(True):
         case '7':
             os.system('cls')
             player_name = current_model
-            link = href
+            link = href[1:]
             set1, mappings = preprocess(rc_util.get_stats(link, player_name))
             current_model = player_name
             set1.rename({'Date_x':'Date'}, inplace=True)
+
             os.system('cls')
             
         case '8':
             os.system('cls')
-            
-            team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
-            num_guys = int(input('Enter the number of players on the team to request (based off of order of roster on bbref.com): \n'))
-            
             if saved_roster == 'None':
+                team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
+                num_guys = int(input('Enter the number of players on the team to request (based off of order of roster on bbref.com): \n'))
                 roster = rc_util.get_roster(team_code, num_guys)
-
+    
             picked = roster_picker(roster)
             current_model = picked[0]
             href = picked[1]
+
+            saved_roster = team_code
 
 
             continue
