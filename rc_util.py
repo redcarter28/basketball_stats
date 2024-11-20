@@ -282,6 +282,7 @@ def get_stats(url_path, name):
 
     # Remove break rows
     df1 = df1[df1['Date'] != 'Date']
+    df1 = df1[df1['FG'] != 'Did Not Play']
 
     # Create a temporary 'Formatted Date' column in df1 for merging
     df1['Formatted Date'] = pd.to_datetime(df1['Date'], format='%Y-%m-%d').dt.strftime('%m/%d')

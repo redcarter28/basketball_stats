@@ -365,21 +365,21 @@ def predict(data):
             '3pa_fga_ratio', 'PTS'
         ]
 
-        for i in range(0, len(field_list)):
-            new_data[field_list[i]] = data[i]
+        for i in range(len(field_list)):
+            field = field_list[i]
+            item = data[i]
 
-
-        # Convert specific columns to float
-        for col in ['PTS', 'AST', 'TRB']:
-            new_data[col] = new_data[col].astype(float)
-
-        
-        # Populate DataFrame with user input or calculated averages
-        for i in range(len(data)):
-            if data[i].lower() == 'avg':
-                new_data[field_list[i]] = [set1.iloc[:6][field_list[i]].mean()]
+            # Check if the item should be replaced with the average
+            if item.lower() == 'avg':
+                # Calculate the average from set1 and assign it to the new DataFrame
+                new_data[field] = [set1[field].iloc[6:].mean()]
             else:
-                new_data[field_list[i]] = [float(data[i].strip('+'))]
+                # Convert item to float if it is a number, stripping any '+' signs, and assign it to the DataFrame
+                try:
+                    new_data[field] = [float(item.strip('+'))]
+                except ValueError:
+                    # Handle or log the error if conversion fails
+                    print(f"Error converting {item} to float for field {field}")
 
         
         # Add calculated ratios
@@ -622,6 +622,8 @@ while(True):
             upcoming_game = rc_util.get_upcoming_game(f'https://www.bettingpros.com/nba/props/{link_bit.lower()}/points/')
             game_info = rc_util.get_game_info(upcoming_game)
             for key in game_info.keys():
+                if team_code == 'NOP':
+                    team_code = 'NOR'
                 if game_info[key] != team_code:
                     opp = game_info[key]
                     break
