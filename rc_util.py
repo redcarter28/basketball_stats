@@ -304,6 +304,7 @@ def get_stats(url_path, name):
 
     # Drop the temporary 'Formatted Date' column and rename columns as needed
     result.drop(columns='Formatted Date', inplace=True)
+    df2.drop(columns='Date_y', inplace=True)
     result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line'}, inplace=True)
 
     # add'l formatting
@@ -311,9 +312,11 @@ def get_stats(url_path, name):
     result['Line'] = pd.to_numeric(result['Line'], errors='coerce')  # Convert non-numeric to NaN
     result = result.dropna(subset=['Line'])  # Drop rows where 'Line' is NaN
 
-    result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': float})
+    #result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': float})
     result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line', 'Date_x':'Date'}, inplace=True)
     
+    for column in list(df.columns.iloc[:, 5:]):
+        result[column] = result[column].astype(int)
 
     print(f'Got stats for {url_path}!')
     return result
