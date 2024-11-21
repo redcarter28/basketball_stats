@@ -1,0 +1,1 @@
+2024-11-21 09:46:29,412 - ERROR - An error occurred: With n_samples=0, test_size=0.2 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters.

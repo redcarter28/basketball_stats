@@ -377,6 +377,9 @@ def predict(data):
                 # Convert item to float if it is a number, stripping any '+' signs, and assign it to the DataFrame
                 try:
                     new_data[field] = [float(item.strip('+'))]
+                    new_data[field] = new_data[field] / new_data[field].max()
+
+
                 except ValueError:
                     # Handle or log the error if conversion fails
                     print(f"Error converting {item} to float for field {field}")
@@ -414,7 +417,7 @@ def predict(data):
         new_data['trend_pts'] = set1['PTS']
         new_data['trend_ast'] = set1['AST']
         new_data['trend_trb'] = set1['TRB']
-        print('canary')
+        
         new_data.fillna(0, inplace=True)
 
         os.system('cls')
@@ -581,6 +584,7 @@ os.system('cls')
 current_model = 'None'
 trained = False
 saved_roster = 'None'
+stats_pulled = False
 
 while(True):
     
@@ -605,6 +609,11 @@ while(True):
             accuracy_service(y_test, y_pred)
             os.system('cls')
         case '3':
+
+            if(not stats_pulled):
+                print(Fore.LIGHTRED_EX + "Pull stats first!\n" + Fore.WHITE)
+                continue
+
             os.system('cls')
             model, X_train, X_test, y_train, y_test, y_pred, X, y = train_model(set1)
             #print(Fore.YELLOW + 'Model re-trained')
@@ -613,6 +622,10 @@ while(True):
         case '4': #custom query menu
             #"FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'
             #EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5
+
+            if(not stats_pulled):
+                print(Fore.LIGHTRED_EX + "Pull stats first!\n" + Fore.WHITE)
+                continue
 
             if not trained:
                 print(Fore.LIGHTRED_EX + "Train a model first!\n" + Fore.WHITE)
@@ -746,6 +759,7 @@ while(True):
             display_label_encodings(mappings)
         case '7':
             os.system('cls')
+            stats_pulled = True
             player_name = current_model
             link = href[1:]
             set1, mappings = preprocess(rc_util.get_stats(link, player_name))
@@ -758,6 +772,8 @@ while(True):
             set1.to_excel(f'output_{current_model}.xlsx', index=False)
 
             os.system('cls')
+
+
             
         case '8':
             os.system('cls')

@@ -246,8 +246,15 @@ def get_stats(url_path, name):
     old_year = current_year - 1
 
     for year in range(2024, 2026):
-        print(f'Fetching game stats for {year}')
-        driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
+        
+        while(True):
+            try:
+                print(f'Fetching game stats for {year}')
+                driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
+                break
+            except Exception as e:
+                print(f'Error during {year} stats request, retrying...')
+        
         time.sleep(4)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         if soup.find('div', class_='assoc_game_log_summary') is None:
@@ -275,7 +282,16 @@ def get_stats(url_path, name):
 
     #print(url2)
     #input(name)
-    df2 = get_prop_history(url2)
+
+    while(True):
+            try:
+                print(f'Fetching game stats for {url2}')
+                df2 = get_prop_history(url2)
+                break
+            except Exception as e:
+                print(f'Error during {url} prop request, retrying...')
+
+                
 
     #print(df1)
 
