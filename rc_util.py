@@ -248,6 +248,7 @@ def get_stats(url_path, name):
     for year in range(2024, 2026):
         print(f'Fetching game stats for {year}')
         driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
+        time.sleep(4)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         if soup.find('div', class_='assoc_game_log_summary') is None:
             print('No game data for this year, skipping...')
@@ -304,7 +305,7 @@ def get_stats(url_path, name):
 
     # Drop the temporary 'Formatted Date' column and rename columns as needed
     result.drop(columns='Formatted Date', inplace=True)
-    df2.drop(columns='Date_y', inplace=True)
+    #df2.drop(columns='Date_y', inplace=True)
     result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line'}, inplace=True)
 
     # add'l formatting
@@ -313,10 +314,11 @@ def get_stats(url_path, name):
     result = result.dropna(subset=['Line'])  # Drop rows where 'Line' is NaN
 
     #result = result.astype({'TRB': int, 'AST': int, 'BLK': int, 'FG': int, 'FGA': int, 'TOV': int, '3P': int, '3PA': int, 'PTS': int, 'Line': float})
-    result.rename(columns={'Unnamed: 5': 'LOC', 'Unnamed: 7': 'W/L', 'Prop Line': 'Line', 'Date_x':'Date'}, inplace=True)
     
-    for column in list(df.columns.iloc[:, 5:]):
-        result[column] = result[column].astype(int)
+    for column in list(result.columns):
+        if column not in ['Date', 'LOC', 'Opp', 'GS', 'MP', 'Result', 'Date_x', 'Date_y', 'Rk', 'G', 'Age', 'Tm', 'W/L']:
+            result[column] = result[column].astype(float)
+        
 
     print(f'Got stats for {url_path}!')
     return result
