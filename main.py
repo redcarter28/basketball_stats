@@ -424,10 +424,15 @@ def predict(data):
 
         # Prediction using the model
         next_game_prediction = model.predict(new_data)
+        prediction_proba = model.predict_proba(new_data)
 
         # Display the results
         your_data = Fore.LIGHTYELLOW_EX + f'YOUR DATA:' + Fore.WHITE + f'\n{new_data}\n'
         prediction_output = Fore.YELLOW + f'NEXT GAME:' + Fore.WHITE + f'\nPrediction: {Fore.GREEN + "Above Line" if next_game_prediction[0] else Fore.LIGHTRED_EX + "Below Line"}'
+        
+        print(Fore.CYAN + f"Probability of Above Line: {prediction_proba[0][1]:.2f}" + Fore.WHITE)
+        print(Fore.CYAN + f"Probability of Below Line: {prediction_proba[0][0]:.2f}" + Fore.WHITE)
+
         #print(your_data)
         return(prediction_output)
 
@@ -623,6 +628,9 @@ while(True):
             #"FORMAT: 'Point_Diff', 'Result_enc', 'LOC_encoded', 'Opp_encoded', 'MP', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'rebounds_assists_ratio', 'pts_reb+ast_ratio', '3pa_fga_ratio', 'PTS'
             #EXAMPLE: +6.5, 0, 0, 1, avg, avg, avg, avg, 4.5, 7.5, 0.5, 0.5, 3.5, avg, avg, avg, 18.5
 
+            if team_code == 'CHO':
+                team_code = 'CHA'
+
             if(not stats_pulled):
                 print(Fore.LIGHTRED_EX + "Pull stats first!\n" + Fore.WHITE)
                 continue
@@ -779,6 +787,13 @@ while(True):
             os.system('cls')
             if saved_roster == 'None':
                 team_code = input('Enter the NBA Team 3-letter code \nEx. Chicago Bulls = CHI\n')
+                
+                match team_code:
+                    case 'CHA':
+                        team_code = 'CHO'
+                    case 'UTA':
+                        team_code = 'UTH'
+            
                 num_guys = int(input('Enter the number of players on the team to request (based off of order of roster on bbref.com): \n'))
                 roster = rc_util.get_roster(team_code, num_guys)
     

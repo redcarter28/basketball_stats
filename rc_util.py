@@ -198,6 +198,10 @@ def get_schedule(url):
     return 'shit brokey lmfao'
 
 def get_roster(team, num_guys):
+
+    if(team == 'UTH'):
+        team = 'UTA'
+
     print(f'Getting roster for {team}...')
     url = 'https://basketball-reference.com/teams/{0}/2025.html'.format(team)
     if(not isSetup):
@@ -229,6 +233,8 @@ def get_roster(team, num_guys):
     os.system('cls')
     
     print(f'Got roster for {team}!')
+    if(team == 'UTA'):
+        team = 'UTH'
     return df_players.iloc[:num_guys]
 
 def get_stats(url_path, name):
@@ -300,6 +306,9 @@ def get_stats(url_path, name):
     # Remove break rows
     df1 = df1[df1['Date'] != 'Date']
     df1 = df1[df1['FG'] != 'Did Not Play']
+    df1 = df1[df1['GS'] != 'Inactive']
+    df1 = df1[df1['GS'] != 'Did Not Dress']
+   
 
     # Create a temporary 'Formatted Date' column in df1 for merging
     df1['Formatted Date'] = pd.to_datetime(df1['Date'], format='%Y-%m-%d').dt.strftime('%m/%d')
