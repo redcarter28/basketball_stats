@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -12,10 +13,12 @@ import os
 import warnings
 from tqdm import tqdm
 import unidecode
+from colorama import Fore
+from bidict import bidict
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-
+bd = bidict()
 service = None
 isSetup = False
 driver = None
@@ -38,6 +41,14 @@ def setup():
     wait = WebDriverWait(driver, 4)  # Increase timeout to desired seconds
     isSetup = True
     #pd.set_option('display.max_rows', 500)
+
+    tdf = pd.read_excel('data\def_data\c_def.xlsx')
+
+    for index, row in tdf.iterrows():
+        code = row['Team'][:3]
+        team_name = row['Team'][4:]
+        bd[code] = team_name
+
     return driver, wait
 
 def get_prop_history(url):
@@ -162,11 +173,15 @@ def get_upcoming_game(url):
     href = game_url.get_attribute('href')
     return href
 
-def get_schedule(url):
+def get_schedule():
     
+    url = f'https://www.basketball-reference.com/leagues/NBA_{datetime.datetime.now().year + 1}_games-{datetime.datetime.now().strftime("%B").lower()}.html'
+
     if(not isSetup):
         driver, wait = setup()
     
+    print(f'Getting schedule for {url}')
+
     driver.get(url)
 
     #schedule = driver.find_element(By.ID, 'schedule')
@@ -222,19 +237,28 @@ def get_roster(team, num_guys):
     players = []
     for tr in table.find('tbody').find_all('tr'):
         player_cell = tr.find('td')  # Assuming the player name is in the first cell
+        pos_cell = tr.find("td", {
+            "data-stat": "pos",
+        })
         if player_cell and player_cell.find('a'):
             player_name = player_cell.find('a').get_text()
             player_href = player_cell.find('a')['href']
-            players.append({'Player': player_name, 'Href': player_href})
+            pos_type = pos_cell.get_text()
+            players.append({'Player': player_name, 'Href': player_href, 'Pos':pos_type})
 
     # Create a DataFrame
     df_players = pd.DataFrame(players)
+    df_players['Pos'] = df_players['Pos'].apply(lambda x: x.upper())
+
+
 
     os.system('cls')
     
     print(f'Got roster for {team}!')
+
     if(team == 'UTA'):
         team = 'UTH'
+
     return df_players.iloc[:num_guys]
 
 def get_stats(url_path, name):
@@ -348,6 +372,19 @@ def get_stats(url_path, name):
     print(f'Got stats for {url_path}!')
     return result
     
+def roster_picker(roster):
+    while(True):
+        os.system('cls')
+        print(Fore.LIGHTGREEN_EX + 'Choose a player to analyze: ' + Fore.WHITE)
+        print(roster)
+        pick = int(input('Enter the row number: '))
+            
+        if(pick == ''):
+            print(Fore.LIGHTRED_EX + 'Input cannot be empty, try again' + Fore.WHITE)
+            input('Press any key to continue')
+            continue
+
+        return [roster.iloc[pick]['Player'].replace('.', ''), roster.iloc[pick]['Href']]
     
 def get_name(url_path):
 
@@ -411,11 +448,95 @@ def get_game_info(url):
         pass
     return odds_dict
 
-#print(get_schedule('https://www.basketball-reference.com/leagues/NBA_2025_games-november.html'))
+def get_stats_v2(url_path):
+    url = f'https://basketball-reference.com/{url_path}'
+    url = url.replace('//', '/')
+    print(f'Getting stats for {url}')
+    if not isSetup:
+        driver, wait = setup()
 
+    seasons = []
+
+    current_year = datetime.date.today().year
+
+    old_year = current_year - 1
+
+    for year in range(2025, 2020, -1):
+        
+        while(True):
+            try:
+                print(f'Fetching game stats for {year}')
+                driver.get(url.split('.html')[0] + '/gamelog/{0}'.format(year))
+                break
+            except Exception as e:
+                print(f'Error during {year} stats request, retrying...')
+        
+        time.sleep(4)
+
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        if soup.find('div', class_='assoc_game_log_summary') is None:
+            print('No game data for this year, ending pull...')
+            break
+
+        # Find the unique parent element that contains the table
+        table = soup.find('table', class_='stats_table')
+
+        if table:
+            df = pd.read_html(str(table))[0]
+
+        seasons.append(df)
+    return pd.concat(seasons)
+
+    
+
+    # first stat set
+
+    df1 = pd.concat(seasons)
+
+def get_pos_def():
+    
+    if(not isSetup):
+        driver, wait = setup()
+
+    url = 'https://www.fantasypros.com/daily-fantasy/nba/fanduel-defense-vs-position.php'
+
+    page = driver.get(url)
+    wait = WebDriverWait(driver, 5)
+
+    tabs = driver.find_elements(By.CSS_SELECTOR, "ul.pills.pos-filter li")
+    data = []
+
+    for tab in tabs:
+        tab.click()  # Click the tab
+        print(f'Getting data for {tab}')
+        wait.until(EC.presence_of_element_located((By.ID, "data-table")))  # Wait for table to load
+        
+        # Parse the dynamically loaded table using BeautifulSoup
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        table = soup.find("table", {"id": "data-table"})
+
+        # Extract rows and columns
+        rows = table.find_all("tr")
+        table_data = []
+        for row in rows:
+            cells = row.find_all(["th", "td"])  # Headers or data cells
+            table_data.append([cell.text.strip() for cell in cells])  # Clean and store text
+        
+        # Create DataFrame and append
+        if table_data:  # Ensure table_data isn't empty
+            df = pd.DataFrame(table_data[1:], columns=table_data[0])  # First row as header
+            tab.text.strip()
+
+            df['Team'] = df['Team'].apply(lambda x: x[3:])
+
+            data.append(df)  # Or use BeautifulSoup to extract structured rows/columns
+
+    return data
+
+print(get_schedule())
 #print(get_stats('/players/h/halibty01.html', 'Tyrese Haliburton'))
 
-#print(get_roster('IND', 5))
+#print(get_roster('CLE', 10))
 # Example usage
 #print(get_prop_history('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 #print(get_stats('players/h/halibty01.html'))
@@ -423,3 +544,5 @@ def get_game_info(url):
 #print(get_upcoming_game('https://www.bettingpros.com/nba/props/tyrese-haliburton/points/'))
 #print(get_game_info('https://bettingpros.com/nba/matchups/boston-celtics-vs-toronto-raptors/'))
 #print(get_prop_info('https://www.bettingpros.com/nba/props/jamal-murray/points/'))
+
+#print(get_pos_def())

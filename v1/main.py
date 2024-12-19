@@ -536,19 +536,6 @@ def the_algo(roster, team_code):
 
     return players
 
-def roster_picker(roster):
-    while(True):
-        os.system('cls')
-        print(Fore.LIGHTGREEN_EX + 'Choose a player to analyze: ' + Fore.WHITE)
-        print(roster)
-        pick = int(input('Enter the row number: '))
-            
-        if(pick == ''):
-            print(Fore.LIGHTRED_EX + 'Input cannot be empty, try again' + Fore.WHITE)
-            input('Press any key to continue')
-            continue
-
-        return [roster.iloc[pick]['Player'].replace('.', ''), roster.iloc[pick]['Href']]
 
 
 
