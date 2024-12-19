@@ -206,11 +206,23 @@ def get_schedule():
 
         # Drop unncessary/empty columns
         df = df.drop(columns=['Arena', 'Notes', 'LOG', 'Attend.']).dropna(how='all', axis='columns')
+
+        df['Visitor/Neutral'] = df['Visitor/Neutral'].apply(lambda x: bd.inverse[x])
+        df['Home/Neutral'] = df['Home/Neutral'].apply(lambda x: bd.inverse[x])
         
         # Display the filtered DataFrame
         return df
 
     return 'shit brokey lmfao'
+
+def get_matchup(schedule):
+
+    matchup = bidict()
+
+    for index, row in schedule.iterrows():
+        matchup[row['Visitor/Neutral']] = row['Home/Neutral']
+
+    return matchup
 
 def get_roster(team, num_guys):
 
@@ -248,7 +260,7 @@ def get_roster(team, num_guys):
 
     # Create a DataFrame
     df_players = pd.DataFrame(players)
-    df_players['Pos'] = df_players['Pos'].apply(lambda x: x.upper())
+    df_players['Pos'] = df_players['Pos'].apply(lambda x: x.lower())
 
 
 
@@ -533,7 +545,7 @@ def get_pos_def():
 
     return data
 
-print(get_schedule())
+print(get_matchup(get_schedule()))
 #print(get_stats('/players/h/halibty01.html', 'Tyrese Haliburton'))
 
 #print(get_roster('CLE', 10))
