@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import datetime
@@ -545,7 +546,104 @@ def get_pos_def():
 
     return data
 
-print(get_matchup(get_schedule()))
+def pos_to_grad(pos):
+    grads = [
+        [255,13,13],
+        [255,78,17],
+        [255,142,21],
+        [250,183,51],
+        [172,179,52],
+        [105,179,76]
+    ]
+
+    return grads[int((pos - 1) * ((5)/(30)))]
+
+def get_nbacom_team_codes():
+
+    if(not isSetup):
+        driver, wait = setup()
+
+    url = 'https://www.nba.com/teams'
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find the wrapper div
+    wrapper = soup.find("div", class_="TeamDivisions_wrapper__5_SVo")
+
+    # Extract all divisions
+    divisions = wrapper.find_all("div", class_="TeamDivisions_division__u3KUS")
+
+    # Prepare data storage
+    data = []
+
+    # Loop through each division
+    for division in divisions:
+        division_name = division.find("div", class_="TeamDivisions_divisionName__KFlSk").text.strip()
+        teams = division.find_all("div", class_="TeamFigure_tf__jA5HW")
+        
+        for team in teams:
+            # Get team details
+            team_name = team.find("a", class_="TeamFigure_tfMainLink__OPLFu").text.strip()
+            team_logo = team.find("img", class_="TeamLogo_logo__PclAJ")["src"]
+            
+            # Get team links
+            links = team.find("div", class_="TeamFigure_tfLinks__gwWFj").find_all("a")
+            links_dict = {link.text.strip(): link["href"] for link in links}
+            
+            # Append data
+            data.append({
+                "Division": division_name,
+                "Team": team_name,
+                "Logo": team_logo,
+                "Profile Link": links_dict.get("Profile", ""),
+                "Stats Link": links_dict.get("Stats", ""),
+                "Schedule Link": links_dict.get("Schedule", ""),
+                "Tickets Link": links_dict.get("Tickets", ""),
+            })
+
+            # Convert to DataFrame
+            df = pd.DataFrame(data)
+            #df.to_excel("nbacom_tmdata.xlsx")
+            # Display the DataFrame
+            return df
+
+def get_nbacom_player_shooting(player_id):
+
+    if(not isSetup):
+        driver, wait = setup()
+
+    url = f'https://www.nba.com/stats/player/{player_id}/shooting'
+
+    driver.get(url)
+
+
+
+    return
+
+def get_nbacom_roster(team_url):
+
+    url = 'https://www.nba.com/team' + team_url
+
+    response = requests.get(url)
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the table element
+    table = soup.find("div", class_='TeamRoster_tableContainer__CUtM0').find('table')
+    hrefs = [link['href'] for link in table.find_all('a') if 'href' in link.attrs]
+
+    # Convert to pandas DataFrame
+    df = pd.read_html(str(table))[0]
+    df['Link'] = hrefs
+
+    return df
+
+
+
+#print(get_nbacom_roster('/1610612738/celtics'))
+#print(get_nbacom_team_codes())
+#print(get_matchup(get_schedule()))
 #print(get_stats('/players/h/halibty01.html', 'Tyrese Haliburton'))
 
 #print(get_roster('CLE', 10))
@@ -558,3 +656,5 @@ print(get_matchup(get_schedule()))
 #print(get_prop_info('https://www.bettingpros.com/nba/props/jamal-murray/points/'))
 
 #print(get_pos_def())
+
+#print(pos_to_grad(7))
